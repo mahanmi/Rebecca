@@ -31,6 +31,7 @@ import {
 	ArrowPathIcon,
 	EyeIcon,
 	PlusIcon,
+	Squares2X2Icon,
 	TrashIcon,
 	XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -1788,36 +1789,52 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 	<title>Subscription</title>
 	<style>
 		:root {
-			--surface:#fff;
-			--text:#111827;
-			--muted:#64748b;
-			--border:#d8e0ec;
+			--surface:#ffffff;
+			--surface-elevated:#f8fafc;
+			--text:#0f172a;
+			--text-secondary:#475569;
+			--muted:#94a3b8;
+			--border:#e2e8f0;
+			--border-muted:#f1f5f9;
 			--primary:#2563eb;
+			--primary-light:color-mix(in srgb,var(--primary) 12%, transparent);
+			--primary-hover:color-mix(in srgb,var(--primary) 88%, #000);
 			--rb-topbar-bg:rgba(15,23,42,.92);
-			--rb-topbar-border:rgba(148,163,184,.28);
-			--rb-gap:10px;
+			--rb-topbar-border:rgba(148,163,184,.22);
+			--rb-gap:12px;
 			--rb-gap-sm:8px;
 			--rb-gap-xs:6px;
-			--rb-pad:14px;
-			--rb-radius:12px;
-			--rb-btn-height:34px;
+			--rb-pad:16px;
+			--rb-radius:14px;
+			--rb-radius-sm:10px;
+			--rb-btn-height:36px;
+			--rb-shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+			--rb-shadow-md:0 2px 8px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.08);
 		}
 		*,*::before,*::after { box-sizing:border-box; }
-		/* FIX: enable scroll */
 		html,body { width:100%; max-width:100%; height:auto; min-height:100%; overflow-x:hidden; }
 		body {
 			margin:0;
 			min-height:100vh;
 			padding:clamp(12px,2.2vw,24px) clamp(10px,2vw,20px) clamp(14px,2vw,20px);
 			color:var(--text);
-			font-family:"Segoe UI",sans-serif;
-			line-height:1.4;
-			transition:background .2s,color .2s;
+			font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
+			line-height:1.5;
+			transition:background .25s,color .25s;
 			overflow-y:auto;
 			-webkit-overflow-scrolling:touch;
 		}
-		body.rb-dark { --surface:#111827; --text:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --primary:#60a5fa; }
-		/* FIX: iframe/container query for preview */
+		body.rb-dark {
+			--surface:#0f172a;
+			--surface-elevated:#1e293b;
+			--text:#f1f5f9;
+			--text-secondary:#94a3b8;
+			--muted:#64748b;
+			--border:#1e293b;
+			--border-muted:#0f172a;
+			--primary:#60a5fa;
+			--primary-light:color-mix(in srgb,var(--primary) 14%, transparent);
+		}
 		.rb-topbar {
 			position:sticky;
 			top:0;
@@ -1825,17 +1842,18 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 			width:100%;
 			max-width:min(100%, ${canvasWidth}px);
 			margin:0 auto var(--rb-gap);
-			padding:8px 10px;
-			border:1px solid var(--border);
-			border-radius:12px;
+			padding:10px 14px;
+			border:1px solid var(--rb-topbar-border);
+			border-radius:var(--rb-radius);
 			background:var(--rb-topbar-bg);
-			border-color:var(--rb-topbar-border);
 			display:grid;
 			grid-template-columns:minmax(0,1fr) auto;
 			align-items:center;
-			min-height:64px;
+			min-height:66px;
 			gap:var(--rb-gap);
-			box-shadow:0 4px 10px rgba(15,23,42,.06);
+			box-shadow:0 4px 16px rgba(15,23,42,.10),0 1px 4px rgba(15,23,42,.08);
+			-webkit-backdrop-filter:blur(16px) saturate(160%);
+			backdrop-filter:blur(16px) saturate(160%);
 			isolation:isolate;
 		}
 		.rb-topbar[data-title-placement="center"] {
@@ -2064,12 +2082,20 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 			container-type:inline-size;
 			min-width:0;
 			min-height:0;
+			box-shadow:var(--rb-shadow);
+			transition:box-shadow .2s;
 		}
+		.rb-widget:hover { box-shadow:var(--rb-shadow-md); }
 		.rb-widget h3 {
-			margin:0 0 calc(var(--rb-widget-gap) + 1px);
-			font-size:clamp(.82rem,2.2cqi,.95rem);
+			margin:0 0 calc(var(--rb-widget-gap) + 2px);
+			font-size:clamp(.78rem,2.2cqi,.88rem);
+			font-weight:600;
 			line-height:1.25;
 			overflow-wrap:anywhere;
+			color:var(--text-secondary);
+			letter-spacing:.01em;
+			text-transform:uppercase;
+			font-size:clamp(.68rem,1.8cqi,.78rem);
 		}
 		.rb-widget[data-density="compact"] { --rb-widget-pad:12px; --rb-widget-gap:7px; }
 		.rb-widget[data-density="mini"] { --rb-widget-pad:10px; --rb-widget-gap:6px; }
@@ -2077,29 +2103,29 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		.rb-widget[data-density="mini"] h3 { font-size:.82rem; }
 		.rb-widget[data-density="compact"] [data-hide-on~="compact"] { display:none !important; }
 		.rb-widget[data-density="mini"] [data-hide-on~="compact"], .rb-widget[data-density="mini"] [data-hide-on~="mini"] { display:none !important; }
-		.rb-value { margin:0; font-size:1.05rem; font-weight:700; line-height:1.2; overflow-wrap:anywhere; }
-		.rb-username-value { font-size:clamp(.9rem,4.4cqi,1.35rem); }
+		.rb-value { margin:0; font-size:1.15rem; font-weight:700; line-height:1.2; overflow-wrap:anywhere; color:var(--text); }
+		.rb-username-value { font-size:clamp(.95rem,4.4cqi,1.45rem); }
 		.rb-widget[data-density="compact"] .rb-value { font-size:.98rem; }
 		.rb-widget[data-density="mini"] .rb-value { font-size:.9rem; }
 		.rb-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--rb-gap-sm); }
 		.rb-widget-usage_summary .rb-metrics { grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); align-items:start; }
 		.rb-widget-usage_summary .rb-metrics > div { min-width:0; }
-		.rb-metrics span { font-size:.72rem; color:var(--muted); display:block; }
-		.rb-metrics strong { font-size:.88rem; display:block; line-height:1.22; overflow-wrap:anywhere; word-break:break-word; }
+		.rb-metrics span { font-size:.68rem; color:var(--muted); display:block; text-transform:uppercase; letter-spacing:.04em; font-weight:500; }
+		.rb-metrics strong { font-size:.92rem; display:block; line-height:1.22; overflow-wrap:anywhere; word-break:break-word; font-weight:600; color:var(--text); }
 		.rb-widget[data-density="compact"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
 		.rb-widget[data-density="mini"] .rb-metrics { grid-template-columns:1fr; gap:6px; }
 		.rb-widget-usage_summary[data-density="compact"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
 		.rb-widget-usage_summary[data-density="mini"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-		.rb-progress { height:8px; border-radius:999px; overflow:hidden; margin-top:6px; background:color-mix(in srgb,var(--primary) 20%, transparent); }
-		.rb-progress span { height:100%; display:block; background:var(--primary); }
-		.rb-status { display:inline-flex; padding:4px 10px; border-radius:999px; color:#fff; text-transform:capitalize; font-size:.8rem; font-weight:700; }
-		.rb-status-active { background:#16a34a; } .rb-status-limited { background:#dc2626; } .rb-status-expired { background:#f59e0b; } .rb-status-disabled { background:#64748b; }
-		.rb-online-pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; color:#fff; font-size:.8rem; font-weight:700; }
-		.rb-online-pill.is-online { background:#16a34a; }
-		.rb-online-pill.is-offline { background:#64748b; }
+		.rb-progress { height:6px; border-radius:999px; overflow:hidden; margin-top:8px; background:color-mix(in srgb,var(--primary) 14%, var(--surface-elevated)); }
+		.rb-progress span { height:100%; display:block; background:linear-gradient(90deg, var(--primary), color-mix(in srgb,var(--primary) 72%, #8b5cf6)); border-radius:999px; transition:width .4s ease; }
+		.rb-status { display:inline-flex; padding:4px 12px; border-radius:999px; color:#fff; text-transform:capitalize; font-size:.74rem; font-weight:700; letter-spacing:.02em; }
+		.rb-status-active { background:linear-gradient(135deg,#16a34a,#15803d); } .rb-status-limited { background:linear-gradient(135deg,#dc2626,#b91c1c); } .rb-status-expired { background:linear-gradient(135deg,#f59e0b,#d97706); } .rb-status-disabled { background:linear-gradient(135deg,#64748b,#475569); }
+		.rb-online-pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 12px; color:#fff; font-size:.74rem; font-weight:700; letter-spacing:.02em; }
+		.rb-online-pill.is-online { background:linear-gradient(135deg,#16a34a,#15803d); }
+		.rb-online-pill.is-offline { background:linear-gradient(135deg,#64748b,#475569); }
 		.rb-kv { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--rb-gap-sm); }
-		.rb-kv span { font-size:.72rem; color:var(--muted); display:block; }
-		.rb-kv strong { font-size:.88rem; display:block; line-height:1.3; overflow-wrap:anywhere; word-break:break-word; }
+		.rb-kv span { font-size:.68rem; color:var(--muted); display:block; text-transform:uppercase; letter-spacing:.04em; font-weight:500; }
+		.rb-kv strong { font-size:.9rem; display:block; line-height:1.3; overflow-wrap:anywhere; word-break:break-word; font-weight:600; color:var(--text); }
 		.rb-widget-expire_details .rb-kv { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 10px; }
 		.rb-widget-expire_details .rb-kv-created { grid-column:1 / -1; }
 		.rb-widget[data-density="compact"] .rb-kv { gap:7px; }
@@ -2119,18 +2145,22 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		.rb-btn {
 			height:var(--rb-btn-height);
 			border:1px solid var(--border);
-			border-radius:8px;
+			border-radius:var(--rb-radius-sm);
 			background:var(--surface);
 			color:var(--text);
-			padding:0 10px;
+			padding:0 12px;
 			font-size:.78rem;
+			font-weight:500;
 			line-height:1;
 			cursor:pointer;
 			white-space:nowrap;
 			max-width:100%;
 			overflow:hidden;
 			text-overflow:ellipsis;
+			transition:background .15s, border-color .15s, box-shadow .15s;
 		}
+		.rb-btn:hover { background:var(--surface-elevated); border-color:color-mix(in srgb,var(--border) 80%, var(--primary)); }
+		.rb-btn:active { background:var(--primary-light); }
 		.rb-widget[data-density="mini"] .rb-btn { font-size:.72rem; }
 		.rb-icon-btn {
 			position:relative;
@@ -2210,10 +2240,12 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		.rb-widget-links[data-density="mini"] .rb-list { max-height:calc(100% - 48px); }
 		.rb-config-item {
 			border:1px solid var(--border);
-			border-radius:9px;
-			padding:6px 8px;
-			background:color-mix(in srgb,var(--surface) 88%, var(--text) 12%);
+			border-radius:var(--rb-radius-sm);
+			padding:7px 10px;
+			background:var(--surface-elevated);
+			transition:border-color .15s;
 		}
+		.rb-config-item:hover { border-color:color-mix(in srgb,var(--primary) 40%, var(--border)); }
 		.rb-config-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:var(--rb-gap-xs); direction:ltr; }
 		.rb-config-name {
 			font-size:.78rem;
@@ -2238,7 +2270,7 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		.rb-date-input { max-width:100%; }
 		.rb-bars { display:grid; grid-template-columns:repeat(14,minmax(0,1fr)); gap:6px; align-items:end; min-height:130px; }
 		.rb-bar { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-		.rb-bar-fill { width:100%; background:var(--primary); border-radius:6px 6px 0 0; }
+		.rb-bar-fill { width:100%; background:linear-gradient(to top, var(--primary), color-mix(in srgb,var(--primary) 65%, #8b5cf6)); border-radius:4px 4px 0 0; }
 		.rb-bar-label { font-size:.62rem; color:var(--muted); }
 		.rb-widget[data-density="compact"] .rb-bars { gap:4px; min-height:108px; }
 		.rb-widget[data-density="mini"] .rb-bars { gap:3px; min-height:92px; }
@@ -3528,6 +3560,7 @@ export const SubscriptionTemplateCreator = ({ onSaved }: CreatorProps) => {
 	const [previewHtml, setPreviewHtml] = useState<string>("");
 	const [isCanvasPanning, setIsCanvasPanning] = useState<boolean>(false);
 	const [canvasScale, setCanvasScale] = useState<number>(1);
+	const [canvasMode, setCanvasMode] = useState<"preview" | "builder">("preview");
 	const [templateMeta, setTemplateMeta] =
 		useState<SubscriptionTemplateContentResponse | null>(null);
 	const canvasViewportRef = useRef<HTMLDivElement | null>(null);
@@ -3581,10 +3614,6 @@ export const SubscriptionTemplateCreator = ({ onSaved }: CreatorProps) => {
 	]);
 
 	useEffect(() => {
-		if (!isPreviewOpen) {
-			setPreviewHtml("");
-			return;
-		}
 		const build = debounce(() => {
 			setPreviewHtml(buildPreviewHtml(widgets, options, previewDevice));
 		}, 70);
@@ -3592,7 +3621,7 @@ export const SubscriptionTemplateCreator = ({ onSaved }: CreatorProps) => {
 		return () => {
 			build.cancel();
 		};
-	}, [isPreviewOpen, options, previewDevice, widgets]);
+	}, [options, previewDevice, widgets]);
 
 	useEffect(() => {
 		const viewport = canvasViewportRef.current;
@@ -5816,547 +5845,732 @@ export const SubscriptionTemplateCreator = ({ onSaved }: CreatorProps) => {
 					</Stack>
 				</Box>
 
+				{/* Canvas / Live Preview Panel */}
 				<Box
 					flex="1"
 					minW={0}
-					borderWidth="2px"
-					borderStyle="dashed"
-					borderColor={isDropActive ? "blue.400" : "gray.300"}
-					borderRadius="lg"
-					p={4}
-					bg={isDropActive ? "blue.50" : "transparent"}
-					_dark={{ bg: isDropActive ? "blue.900" : "transparent" }}
-					onDragOver={(event) => {
-						event.preventDefault();
-						event.dataTransfer.dropEffect = "copy";
-						setIsDropActive(true);
+					borderWidth="1px"
+					borderColor={canvasMode === "builder" && isDropActive ? "blue.400" : "gray.200"}
+					_dark={{
+						borderColor: canvasMode === "builder" && isDropActive ? "blue.500" : "gray.700",
+						bg: "gray.800",
 					}}
-					onDragLeave={() => setIsDropActive(false)}
-					onDrop={onDropCanvas}
+					borderRadius="xl"
+					overflow="hidden"
+					display="flex"
+					flexDirection="column"
+					bg="white"
+					boxShadow="sm"
+					onDragOver={
+						canvasMode === "builder"
+							? (event) => {
+									event.preventDefault();
+									event.dataTransfer.dropEffect = "copy";
+									setIsDropActive(true);
+							  }
+							: undefined
+					}
+					onDragLeave={canvasMode === "builder" ? () => setIsDropActive(false) : undefined}
+					onDrop={canvasMode === "builder" ? onDropCanvas : undefined}
 				>
-					<Flex justify="space-between" align="center" mb={3}>
-						<Text fontWeight="semibold">
-							{t("settings.templates.canvas", "Canvas")}
-						</Text>
+					{/* Panel Header */}
+					<Flex
+						align="center"
+						justify="space-between"
+						px={4}
+						py={2.5}
+						borderBottomWidth="1px"
+						borderColor="gray.200"
+						_dark={{ borderColor: "gray.700", bg: "gray.800" }}
+						bg="white"
+						gap={3}
+						flexWrap="wrap"
+						flexShrink={0}
+					>
 						<HStack spacing={2}>
-							<Badge colorScheme="purple">
-							{t("settings.templates.count", {
-								defaultValue: "{{count}} widgets",
-								count: widgets.length,
-							})}
-							</Badge>
-							<Badge colorScheme="green">
-								{options.canvas.width}×{options.canvas.height}
-							</Badge>
+							<Text fontWeight="semibold" fontSize="sm">
+								{canvasMode === "preview"
+									? t("settings.templates.livePreview", "Live Preview")
+									: t("settings.templates.canvas", "Canvas")}
+							</Text>
+							{canvasMode === "preview" ? (
+								<Badge
+									colorScheme="green"
+									fontSize="xs"
+									variant="subtle"
+									borderRadius="full"
+								>
+									{t("settings.templates.live", "Live")}
+								</Badge>
+							) : (
+								<HStack spacing={1}>
+									<Badge colorScheme="purple" fontSize="xs" variant="subtle">
+										{t("settings.templates.count", {
+											defaultValue: "{{count}} widgets",
+											count: widgets.length,
+										})}
+									</Badge>
+									<Badge colorScheme="green" fontSize="xs" variant="subtle">
+										{options.canvas.width}×{options.canvas.height}
+									</Badge>
+								</HStack>
+							)}
+						</HStack>
+						<HStack spacing={2} flexWrap="wrap" justify="flex-end">
+							{canvasMode === "preview" && (
+								<HStack spacing={1}>
+									{(Object.keys(PREVIEW_DEVICES) as PreviewDevice[]).map((device) => (
+										<Button
+											key={device}
+											size="xs"
+											variant={previewDevice === device ? "solid" : "ghost"}
+											colorScheme={previewDevice === device ? "blue" : undefined}
+											onClick={() => setPreviewDevice(device)}
+										>
+											{t(
+												`settings.templates.preview.${device}`,
+												PREVIEW_DEVICES[device].label,
+											)}
+										</Button>
+									))}
+								</HStack>
+							)}
+							<Button
+								size="xs"
+								variant="outline"
+								leftIcon={
+									canvasMode === "preview" ? (
+										<Squares2X2Icon width={12} height={12} />
+									) : (
+										<EyeIcon width={12} height={12} />
+									)
+								}
+								onClick={() =>
+									setCanvasMode(canvasMode === "preview" ? "builder" : "preview")
+								}
+							>
+								{canvasMode === "preview"
+									? t("settings.templates.builderMode", "Builder")
+									: t("settings.templates.previewMode", "Preview")}
+							</Button>
 						</HStack>
 					</Flex>
-					<SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mb={3}>
-						<FormControl>
-							<FormLabel fontSize="sm">
-								{t("settings.templates.canvasWidth", "Canvas width")}
-							</FormLabel>
-							<Input
-								size="sm"
-								type="number"
-								min={MIN_CANVAS_WIDTH}
-								max={MAX_CANVAS_WIDTH}
-								value={options.canvas.width}
-								onChange={(event) => {
-									const nextWidth = Number(event.target.value);
-									if (!Number.isFinite(nextWidth)) {
-										return;
-									}
-									resizeCanvas(nextWidth, options.canvas.height);
-								}}
-							/>
-						</FormControl>
-						<FormControl>
-							<FormLabel fontSize="sm">
-								{t("settings.templates.canvasHeight", "Canvas height")}
-							</FormLabel>
-							<Input
-								size="sm"
-								type="number"
-								min={MIN_CANVAS_HEIGHT}
-								max={MAX_CANVAS_HEIGHT}
-								value={options.canvas.height}
-								onChange={(event) => {
-									const nextHeight = Number(event.target.value);
-									if (!Number.isFinite(nextHeight)) {
-										return;
-									}
-									resizeCanvas(options.canvas.width, nextHeight);
-								}}
-							/>
-						</FormControl>
-					</SimpleGrid>
-					<Text fontSize="sm" color="gray.500" mb={3}>
-						{t(
-							"settings.templates.canvasHint",
-							"Drop widgets here. Drag to move and resize from bottom-right corner. Coordinates are saved.",
-						)}
-					</Text>
-					<Text fontSize="xs" color="gray.500" mb={3}>
-						{t(
-							"settings.templates.widgetMinHint",
-							"Each widget has enforced min/max dimensions to prevent overlap and extreme resizing.",
-						)}
-					</Text>
-					{hasCanvasOverlap ? (
-						<Text fontSize="xs" color="orange.500" mb={3}>
-							{t(
-								"settings.templates.outputOverlapWarning",
-								"Some widgets overlap; output will auto-stack to avoid overlap.",
-							)}
-						</Text>
-					) : null}
-					{isLoading ? (
-						<Flex align="center" justify="center" minH="220px">
-							<Spinner />
-						</Flex>
-					) : widgets.length === 0 ? (
-						<Flex
-							minH="220px"
-							align="center"
-							justify="center"
-							borderWidth="1px"
-							borderRadius="md"
-							borderStyle="dashed"
-							borderColor="gray.300"
-						>
-							<Text color="gray.500">
-								{t(
-									"settings.templates.empty",
-									"No widgets yet. Drag from left side or click Add.",
-								)}
-							</Text>
-						</Flex>
-					) : (
+
+					{/* Panel Body */}
+					{canvasMode === "preview" ? (
+						/* ── Live Preview Mode ── */
 						<Box
-							ref={canvasViewportRef}
-							borderWidth="1px"
-							borderRadius="md"
-							bg="gray.50"
-							_dark={{ bg: "gray.900" }}
-							w="full"
+							flex="1"
+							minH="480px"
 							h="72vh"
-							minH="320px"
 							maxH="92vh"
+							bg="gray.100"
+							_dark={{ bg: "gray.950" }}
+							p={{ base: 3, md: 6 }}
 							overflowY="auto"
-							overflowX="hidden"
-							cursor={isCanvasPanning ? "grabbing" : "grab"}
-							onMouseDown={startCanvasPan}
-							onContextMenu={(event) => event.preventDefault()}
-							onCopy={(event) => event.preventDefault()}
-							onCut={(event) => event.preventDefault()}
-							userSelect="none"
+							display="flex"
+							alignItems="flex-start"
+							justifyContent="center"
 							style={{ resize: "vertical" }}
 						>
-							<Box
-								position="relative"
-								w={`${scaledCanvasWidth}px`}
-								h={`${scaledCanvasHeight}px`}
-								mx="auto"
-							>
+							{isLoading ? (
+								<Flex align="center" justify="center" w="full" h="full" minH="320px">
+									<Spinner />
+								</Flex>
+							) : widgets.length === 0 ? (
+								<Flex
+									align="center"
+									justify="center"
+									w="full"
+									h="full"
+									minH="320px"
+									direction="column"
+									gap={3}
+								>
+									<Box
+										p={6}
+										borderRadius="xl"
+										borderWidth="1px"
+										borderStyle="dashed"
+										borderColor="gray.300"
+										_dark={{ borderColor: "gray.600" }}
+										textAlign="center"
+										maxW="360px"
+									>
+										<Text fontSize="2xl" mb={2}>
+											📋
+										</Text>
+										<Text fontWeight="semibold" mb={1}>
+											{t("settings.templates.emptyPreview", "No widgets yet")}
+										</Text>
+										<Text fontSize="sm" color="gray.500" mb={3}>
+											{t(
+												"settings.templates.emptyPreviewHint",
+												"Switch to Builder mode and add widgets to see the live preview.",
+											)}
+										</Text>
+										<Button
+											size="sm"
+											variant="outline"
+											leftIcon={<Squares2X2Icon width={14} height={14} />}
+											onClick={() => setCanvasMode("builder")}
+										>
+											{t("settings.templates.builderMode", "Builder")}
+										</Button>
+									</Box>
+								</Flex>
+							) : (
 								<Box
-									ref={canvasRef}
-									position="absolute"
-									left={0}
-									top={0}
-									bg="gray.50"
-									_dark={{ bg: "gray.900" }}
-									w={`${options.canvas.width}px`}
-									h={`${options.canvas.height}px`}
+									w={previewDeviceConfig.width}
+									maxW="100%"
+									borderRadius={previewDevice === "mobile" ? "2xl" : "xl"}
+									overflow="hidden"
+									boxShadow="0 20px 60px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.15)"
+									borderWidth="1px"
+									borderColor="gray.300"
+									_dark={{ borderColor: "gray.600" }}
 									style={{
-										transform: `scale(${canvasScale})`,
-										transformOrigin: "top left",
-									}}
-									onMouseDown={(event) => {
-										const target = event.target as HTMLElement | null;
-										if (target?.closest(".rb-builder-widget, [data-builder-widget='1']")) {
-											return;
-										}
-										setActiveWidgetId(null);
+										minHeight: "480px",
+										maxHeight: "85vh",
+										aspectRatio:
+											previewDevice === "mobile"
+												? "9 / 16"
+												: previewDevice === "tablet"
+													? "4 / 5"
+													: undefined,
 									}}
 								>
-								{widgets.map((widget) => {
-									const def = widgetMap.get(widget.type);
-									if (!def) {
-										return null;
-									}
-									const isActive = activeWidgetId === widget.id;
-									const minDims = getWidgetMinDimensions(widget.type);
-									const maxDims = getWidgetMaxDimensions(
-										widget.type,
-										options.canvas.width,
-										options.canvas.height,
-									);
-									const nearMin =
-										widget.bounds.width <= minDims.width + INTERACTION_GRID_SNAP ||
-										widget.bounds.height <= minDims.height + INTERACTION_GRID_SNAP;
-									const nearMax =
-										widget.bounds.width >= maxDims.width - INTERACTION_GRID_SNAP ||
-										widget.bounds.height >= maxDims.height - INTERACTION_GRID_SNAP;
-
-									return (
-										<Rnd
-											className="rb-builder-widget"
-											key={`${widget.id}-${widget.bounds.x}-${widget.bounds.y}-${widget.bounds.width}-${widget.bounds.height}`}
-											data-builder-widget="1"
-											scale={canvasScale}
-											default={{
-												x: widget.bounds.x,
-												y: widget.bounds.y,
-												width: widget.bounds.width,
-												height: widget.bounds.height,
+									<Box
+										as="iframe"
+										key={`inline-preview-${previewDevice}`}
+										title="Subscription template live preview"
+										w="full"
+										h="full"
+										display="block"
+										border="0"
+										bg="transparent"
+										sandbox="allow-scripts allow-same-origin"
+										srcDoc={previewHtml}
+										style={{
+											minHeight: "480px",
+											touchAction: isTouchPreview ? "pan-y pinch-zoom" : "auto",
+										}}
+									/>
+								</Box>
+							)}
+						</Box>
+					) : (
+						/* ── Builder Mode ── */
+						<Box flex="1" p={4} display="flex" flexDirection="column" gap={3} overflow="hidden">
+							<SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+								<FormControl>
+									<FormLabel fontSize="sm">
+										{t("settings.templates.canvasWidth", "Canvas width")}
+									</FormLabel>
+									<Input
+										size="sm"
+										type="number"
+										min={MIN_CANVAS_WIDTH}
+										max={MAX_CANVAS_WIDTH}
+										value={options.canvas.width}
+										onChange={(event) => {
+											const nextWidth = Number(event.target.value);
+											if (!Number.isFinite(nextWidth)) {
+												return;
+											}
+											resizeCanvas(nextWidth, options.canvas.height);
+										}}
+									/>
+								</FormControl>
+								<FormControl>
+									<FormLabel fontSize="sm">
+										{t("settings.templates.canvasHeight", "Canvas height")}
+									</FormLabel>
+									<Input
+										size="sm"
+										type="number"
+										min={MIN_CANVAS_HEIGHT}
+										max={MAX_CANVAS_HEIGHT}
+										value={options.canvas.height}
+										onChange={(event) => {
+											const nextHeight = Number(event.target.value);
+											if (!Number.isFinite(nextHeight)) {
+												return;
+											}
+											resizeCanvas(options.canvas.width, nextHeight);
+										}}
+									/>
+								</FormControl>
+							</SimpleGrid>
+							<Text fontSize="sm" color="gray.500">
+								{t(
+									"settings.templates.canvasHint",
+									"Drop widgets here. Drag to move and resize from bottom-right corner. Coordinates are saved.",
+								)}
+							</Text>
+							<Text fontSize="xs" color="gray.500">
+								{t(
+									"settings.templates.widgetMinHint",
+									"Each widget has enforced min/max dimensions to prevent overlap and extreme resizing.",
+								)}
+							</Text>
+							{hasCanvasOverlap ? (
+								<Text fontSize="xs" color="orange.500">
+									{t(
+										"settings.templates.outputOverlapWarning",
+										"Some widgets overlap; output will auto-stack to avoid overlap.",
+									)}
+								</Text>
+							) : null}
+							{isLoading ? (
+								<Flex align="center" justify="center" minH="220px">
+									<Spinner />
+								</Flex>
+							) : widgets.length === 0 ? (
+								<Flex
+									minH="220px"
+									align="center"
+									justify="center"
+									borderWidth="1px"
+									borderRadius="md"
+									borderStyle="dashed"
+									borderColor="gray.300"
+								>
+									<Text color="gray.500">
+										{t(
+											"settings.templates.empty",
+											"No widgets yet. Drag from left side or click Add.",
+										)}
+									</Text>
+								</Flex>
+							) : (
+								<Box
+									ref={canvasViewportRef}
+									borderWidth="1px"
+									borderRadius="md"
+									bg="gray.50"
+									_dark={{ bg: "gray.900" }}
+									w="full"
+									h="72vh"
+									minH="320px"
+									maxH="92vh"
+									overflowY="auto"
+									overflowX="hidden"
+									cursor={isCanvasPanning ? "grabbing" : "grab"}
+									onMouseDown={startCanvasPan}
+									onContextMenu={(event) => event.preventDefault()}
+									onCopy={(event) => event.preventDefault()}
+									onCut={(event) => event.preventDefault()}
+									userSelect="none"
+									style={{ resize: "vertical" }}
+								>
+									<Box
+										position="relative"
+										w={`${scaledCanvasWidth}px`}
+										h={`${scaledCanvasHeight}px`}
+										mx="auto"
+									>
+										<Box
+											ref={canvasRef}
+											position="absolute"
+											left={0}
+											top={0}
+											bg="gray.50"
+											_dark={{ bg: "gray.900" }}
+											w={`${options.canvas.width}px`}
+											h={`${options.canvas.height}px`}
+											style={{
+												transform: `scale(${canvasScale})`,
+												transformOrigin: "top left",
 											}}
-											bounds="parent"
-											minWidth={minDims.width}
-											minHeight={minDims.height}
-											maxWidth={maxDims.width}
-											maxHeight={maxDims.height}
-											dragGrid={[INTERACTION_GRID_SNAP, INTERACTION_GRID_SNAP]}
-											resizeGrid={[INTERACTION_GRID_SNAP, INTERACTION_GRID_SNAP]}
-											enableResizing={{ bottomRight: true }}
-											dragHandleClassName="rb-widget-drag-handle"
-											cancel=".rb-widget-no-drag"
-											onDragStart={() => setActiveWidgetId(widget.id)}
-											onDrag={(event, data) => {
-												const clientY = getPointerClientY(event);
-												if (clientY !== null) {
-													autoScrollCanvasViewport(clientY);
+											onMouseDown={(event) => {
+												const target = event.target as HTMLElement | null;
+												if (target?.closest(".rb-builder-widget, [data-builder-widget='1']")) {
+													return;
 												}
-												resolveAutoCanvasHeight({
-													...widget.bounds,
-													x: data.x,
-													y: data.y,
-												});
-											}}
-											onDragStop={(event, data) => {
-												const clientY = getPointerClientY(event);
-												if (clientY !== null) {
-													autoScrollCanvasViewport(clientY);
-												}
-												updateWidgetBounds(widget.id, {
-													...widget.bounds,
-													x: data.x,
-													y: data.y,
-												});
-											}}
-											onResizeStart={() => setActiveWidgetId(widget.id)}
-											onResize={(event, _direction, ref, _delta, position) => {
-												const clientY = getPointerClientY(event);
-												if (clientY !== null) {
-													autoScrollCanvasViewport(clientY);
-												}
-												resolveAutoCanvasHeight({
-													x: position.x,
-													y: position.y,
-													width: ref.offsetWidth,
-													height: ref.offsetHeight,
-												});
-											}}
-											onResizeStop={(event, _direction, ref, _delta, position) => {
-												const clientY = getPointerClientY(event);
-												if (clientY !== null) {
-													autoScrollCanvasViewport(clientY);
-												}
-												updateWidgetBounds(widget.id, {
-													x: position.x,
-													y: position.y,
-													width: ref.offsetWidth,
-													height: ref.offsetHeight,
-												});
-											}}
-											style={{ zIndex: isActive ? 3 : 1 }}
-											resizeHandleStyles={{
-												bottomRight: {
-													width: "12px",
-													height: "12px",
-													right: "0px",
-													bottom: "0px",
-													background: isActive ? "#4299e1" : "#a0aec0",
-													borderTopLeftRadius: "4px",
-												},
+												setActiveWidgetId(null);
 											}}
 										>
-											<Box
-												borderWidth="1px"
-												borderColor={isActive ? "blue.400" : "gray.300"}
-												borderRadius="md"
-												bg="white"
-												_dark={{ bg: "gray.800", borderColor: isActive ? "blue.300" : "gray.600" }}
-												boxShadow={isActive ? "md" : "sm"}
-												outline={
-													isActive && nearMin
-														? "1px dashed"
-														: isActive && nearMax
-															? "1px dashed"
-															: "none"
-												}
-												outlineColor={
-													isActive && nearMin
-														? "orange.400"
-														: isActive && nearMax
-															? "purple.400"
-															: "transparent"
-												}
-												overflow="hidden"
-												w="full"
-												h="full"
-												onMouseDown={() => setActiveWidgetId(widget.id)}
-											>
-												<Flex
-													className="rb-widget-drag-handle"
-													align="center"
-													justify="space-between"
-													px={2}
-													py={1}
-													bg={isActive ? "blue.50" : "gray.100"}
-													_dark={{ bg: isActive ? "blue.900" : "gray.700" }}
-													cursor="grab"
+										{widgets.map((widget) => {
+											const def = widgetMap.get(widget.type);
+											if (!def) {
+												return null;
+											}
+											const isActive = activeWidgetId === widget.id;
+											const minDims = getWidgetMinDimensions(widget.type);
+											const maxDims = getWidgetMaxDimensions(
+												widget.type,
+												options.canvas.width,
+												options.canvas.height,
+											);
+											const nearMin =
+												widget.bounds.width <= minDims.width + INTERACTION_GRID_SNAP ||
+												widget.bounds.height <= minDims.height + INTERACTION_GRID_SNAP;
+											const nearMax =
+												widget.bounds.width >= maxDims.width - INTERACTION_GRID_SNAP ||
+												widget.bounds.height >= maxDims.height - INTERACTION_GRID_SNAP;
+
+											return (
+												<Rnd
+													className="rb-builder-widget"
+													key={`${widget.id}-${widget.bounds.x}-${widget.bounds.y}-${widget.bounds.width}-${widget.bounds.height}`}
+													data-builder-widget="1"
+													scale={canvasScale}
+													default={{
+														x: widget.bounds.x,
+														y: widget.bounds.y,
+														width: widget.bounds.width,
+														height: widget.bounds.height,
+													}}
+													bounds="parent"
+													minWidth={minDims.width}
+													minHeight={minDims.height}
+													maxWidth={maxDims.width}
+													maxHeight={maxDims.height}
+													dragGrid={[INTERACTION_GRID_SNAP, INTERACTION_GRID_SNAP]}
+													resizeGrid={[INTERACTION_GRID_SNAP, INTERACTION_GRID_SNAP]}
+													enableResizing={{ bottomRight: true }}
+													dragHandleClassName="rb-widget-drag-handle"
+													cancel=".rb-widget-no-drag"
+													onDragStart={() => setActiveWidgetId(widget.id)}
+													onDrag={(event, data) => {
+														const clientY = getPointerClientY(event);
+														if (clientY !== null) {
+															autoScrollCanvasViewport(clientY);
+														}
+														resolveAutoCanvasHeight({
+															...widget.bounds,
+															x: data.x,
+															y: data.y,
+														});
+													}}
+													onDragStop={(event, data) => {
+														const clientY = getPointerClientY(event);
+														if (clientY !== null) {
+															autoScrollCanvasViewport(clientY);
+														}
+														updateWidgetBounds(widget.id, {
+															...widget.bounds,
+															x: data.x,
+															y: data.y,
+														});
+													}}
+													onResizeStart={() => setActiveWidgetId(widget.id)}
+													onResize={(event, _direction, ref, _delta, position) => {
+														const clientY = getPointerClientY(event);
+														if (clientY !== null) {
+															autoScrollCanvasViewport(clientY);
+														}
+														resolveAutoCanvasHeight({
+															x: position.x,
+															y: position.y,
+															width: ref.offsetWidth,
+															height: ref.offsetHeight,
+														});
+													}}
+													onResizeStop={(event, _direction, ref, _delta, position) => {
+														const clientY = getPointerClientY(event);
+														if (clientY !== null) {
+															autoScrollCanvasViewport(clientY);
+														}
+														updateWidgetBounds(widget.id, {
+															x: position.x,
+															y: position.y,
+															width: ref.offsetWidth,
+															height: ref.offsetHeight,
+														});
+													}}
+													style={{ zIndex: isActive ? 3 : 1 }}
+													resizeHandleStyles={{
+														bottomRight: {
+															width: "12px",
+															height: "12px",
+															right: "0px",
+															bottom: "0px",
+															background: isActive ? "#4299e1" : "#a0aec0",
+															borderTopLeftRadius: "4px",
+														},
+													}}
 												>
-													<Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
-														{def.label}
-													</Text>
-													<IconButton
-														className="rb-widget-no-drag"
-														size="sm"
-														variant="ghost"
-														colorScheme="red"
-														aria-label="remove"
-														icon={<TrashIcon width={12} height={12} />}
-														onClick={() => removeWidget(widget.id)}
-													/>
-												</Flex>
-												<Box px={2} py={2} h="calc(100% - 34px)" overflowY="auto">
-													<Text fontSize="10px" color="gray.500">
-														{def.preview}
-													</Text>
-													{isActive ? (
-														<Stack spacing={2} mt={2}>
-															<Text fontSize="10px" color="gray.500">
-																x:{Math.round(widget.bounds.x)} y:{Math.round(widget.bounds.y)} w:
-																{Math.round(widget.bounds.width)} h:
-																{Math.round(widget.bounds.height)}
+													<Box
+														borderWidth="1px"
+														borderColor={isActive ? "blue.400" : "gray.300"}
+														borderRadius="md"
+														bg="white"
+														_dark={{ bg: "gray.800", borderColor: isActive ? "blue.300" : "gray.600" }}
+														boxShadow={isActive ? "md" : "sm"}
+														outline={
+															isActive && nearMin
+																? "1px dashed"
+																: isActive && nearMax
+																	? "1px dashed"
+																	: "none"
+														}
+														outlineColor={
+															isActive && nearMin
+																? "orange.400"
+																: isActive && nearMax
+																	? "purple.400"
+																	: "transparent"
+														}
+														overflow="hidden"
+														w="full"
+														h="full"
+														onMouseDown={() => setActiveWidgetId(widget.id)}
+													>
+														<Flex
+															className="rb-widget-drag-handle"
+															align="center"
+															justify="space-between"
+															px={2}
+															py={1}
+															bg={isActive ? "blue.50" : "gray.100"}
+															_dark={{ bg: isActive ? "blue.900" : "gray.700" }}
+															cursor="grab"
+														>
+															<Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+																{def.label}
 															</Text>
+															<IconButton
+																className="rb-widget-no-drag"
+																size="sm"
+																variant="ghost"
+																colorScheme="red"
+																aria-label="remove"
+																icon={<TrashIcon width={12} height={12} />}
+																onClick={() => removeWidget(widget.id)}
+															/>
+														</Flex>
+														<Box px={2} py={2} h="calc(100% - 34px)" overflowY="auto">
 															<Text fontSize="10px" color="gray.500">
-																{t("settings.templates.widgetMinMax", {
-																	defaultValue: "Min: {{minW}}x{{minH}} | Max: {{maxW}}x{{maxH}}",
-																	minW: minDims.width,
-																	minH: minDims.height,
-																	maxW: maxDims.width,
-																	maxH: maxDims.height,
-																})}
+																{def.preview}
 															</Text>
-															{nearMin || nearMax ? (
-																<Text
-																	fontSize="10px"
-																	color={nearMin ? "orange.500" : "purple.500"}
-																>
-																	{nearMin
-																		? t(
-																				"settings.templates.nearMinHint",
-																				"Approaching minimum size limit",
-																		  )
-																		: t(
-																				"settings.templates.nearMaxHint",
-																				"Approaching maximum size limit",
-																		  )}
-																</Text>
-															) : null}
+															{isActive ? (
+																<Stack spacing={2} mt={2}>
+																	<Text fontSize="10px" color="gray.500">
+																		x:{Math.round(widget.bounds.x)} y:{Math.round(widget.bounds.y)} w:
+																		{Math.round(widget.bounds.width)} h:
+																		{Math.round(widget.bounds.height)}
+																	</Text>
+																	<Text fontSize="10px" color="gray.500">
+																		{t("settings.templates.widgetMinMax", {
+																			defaultValue: "Min: {{minW}}x{{minH}} | Max: {{maxW}}x{{maxH}}",
+																			minW: minDims.width,
+																			minH: minDims.height,
+																			maxW: maxDims.width,
+																			maxH: maxDims.height,
+																		})}
+																	</Text>
+																	{nearMin || nearMax ? (
+																		<Text
+																			fontSize="10px"
+																			color={nearMin ? "orange.500" : "purple.500"}
+																		>
+																			{nearMin
+																				? t(
+																						"settings.templates.nearMinHint",
+																						"Approaching minimum size limit",
+																				  )
+																				: t(
+																						"settings.templates.nearMaxHint",
+																						"Approaching maximum size limit",
+																				  )}
+																		</Text>
+																	) : null}
 
-															{widget.type === "links" ? (
-																<>
-																	<FormControl display="flex" alignItems="center">
-																		<FormLabel mb={0} fontSize="sm" flex="1">
-																			{t(
-																				"settings.templates.extractConfigNames",
-																				"Extract and show config names",
-																			)}
-																		</FormLabel>
-																		<Switch
-																			size="sm"
-																			isChecked={options.configLinks.showConfigNames}
-																			onChange={(event) =>
-																				setOptions((prev) => ({
-																					...prev,
-																					configLinks: {
-																						...prev.configLinks,
-																						showConfigNames: event.target.checked,
-																					},
-																				}))
-																			}
-																		/>
-																	</FormControl>
-																	<FormControl display="flex" alignItems="center">
-																		<FormLabel mb={0} fontSize="sm" flex="1">
-																			{t(
-																				"settings.templates.enableConfigQr",
-																				"Enable QR modal for each config",
-																			)}
-																		</FormLabel>
-																		<Switch
-																			size="sm"
-																			isChecked={options.configLinks.enableQrModal}
-																			onChange={(event) =>
-																				setOptions((prev) => ({
-																					...prev,
-																					configLinks: {
-																						...prev.configLinks,
-																						enableQrModal: event.target.checked,
-																					},
-																				}))
-																			}
-																		/>
-																	</FormControl>
-																</>
-															) : null}
+																	{widget.type === "links" ? (
+																		<>
+																			<FormControl display="flex" alignItems="center">
+																				<FormLabel mb={0} fontSize="sm" flex="1">
+																					{t(
+																						"settings.templates.extractConfigNames",
+																						"Extract and show config names",
+																					)}
+																				</FormLabel>
+																				<Switch
+																					size="sm"
+																					isChecked={options.configLinks.showConfigNames}
+																					onChange={(event) =>
+																						setOptions((prev) => ({
+																							...prev,
+																							configLinks: {
+																								...prev.configLinks,
+																								showConfigNames: event.target.checked,
+																							},
+																						}))
+																					}
+																				/>
+																			</FormControl>
+																			<FormControl display="flex" alignItems="center">
+																				<FormLabel mb={0} fontSize="sm" flex="1">
+																					{t(
+																						"settings.templates.enableConfigQr",
+																						"Enable QR modal for each config",
+																					)}
+																				</FormLabel>
+																				<Switch
+																					size="sm"
+																					isChecked={options.configLinks.enableQrModal}
+																					onChange={(event) =>
+																						setOptions((prev) => ({
+																							...prev,
+																							configLinks: {
+																								...prev.configLinks,
+																								enableQrModal: event.target.checked,
+																							},
+																						}))
+																					}
+																				/>
+																			</FormControl>
+																		</>
+																	) : null}
 
-															{widget.type === "usage_chart" ? (
-																<>
-																	<FormControl display="flex" alignItems="center">
-																		<FormLabel mb={0} fontSize="sm" flex="1">
-																			{t(
-																				"settings.templates.enableDateControls",
-																				"Enable date controls",
-																			)}
-																		</FormLabel>
-																		<Switch
-																			size="sm"
-																			isChecked={options.chart.enableDateControls}
-																			onChange={(event) =>
-																				setOptions((prev) => ({
-																					...prev,
-																					chart: {
-																						...prev.chart,
-																						enableDateControls: event.target.checked,
-																					},
-																				}))
-																			}
-																		/>
-																	</FormControl>
-																	<FormControl display="flex" alignItems="center">
-																		<FormLabel mb={0} fontSize="sm" flex="1">
-																			{t(
-																				"settings.templates.enableQuickRanges",
-																				"Show quick range buttons",
-																			)}
-																		</FormLabel>
-																		<Switch
-																			size="sm"
-																			isDisabled={!options.chart.enableDateControls}
-																			isChecked={options.chart.showQuickRanges}
-																			onChange={(event) =>
-																				setOptions((prev) => ({
-																					...prev,
-																					chart: {
-																						...prev.chart,
-																						showQuickRanges: event.target.checked,
-																					},
-																				}))
-																			}
-																		/>
-																	</FormControl>
-																	<FormControl display="flex" alignItems="center">
-																		<FormLabel mb={0} fontSize="sm" flex="1">
-																			{t(
-																				"settings.templates.enableCalendar",
-																				"Show calendar inputs",
-																			)}
-																		</FormLabel>
-																		<Switch
-																			size="sm"
-																			isDisabled={!options.chart.enableDateControls}
-																			isChecked={options.chart.showCalendar}
-																			onChange={(event) =>
-																				setOptions((prev) => ({
-																					...prev,
-																					chart: {
-																						...prev.chart,
-																						showCalendar: event.target.checked,
-																					},
-																				}))
-																			}
-																		/>
-																	</FormControl>
-																	<FormControl>
-																		<FormLabel fontSize="sm" mb={1}>
-																			{t(
-																				"settings.templates.defaultRangeDays",
-																				"Default range (days)",
-																			)}
-																		</FormLabel>
-																		<Input
-																			size="sm"
-																			type="number"
-																			min={1}
-																			max={120}
-																			value={options.chart.defaultRangeDays}
-																			onChange={(event) => {
-																				const next = Number(event.target.value);
-																				setOptions((prev) => ({
-																					...prev,
-																					chart: {
-																						...prev.chart,
-																						defaultRangeDays:
-																							Number.isFinite(next) && next > 0
-																								? Math.min(120, Math.max(1, Math.round(next)))
-																								: prev.chart.defaultRangeDays,
-																					},
-																				}));
-																			}}
-																		/>
-																	</FormControl>
-																</>
-															) : null}
+																	{widget.type === "usage_chart" ? (
+																		<>
+																			<FormControl display="flex" alignItems="center">
+																				<FormLabel mb={0} fontSize="sm" flex="1">
+																					{t(
+																						"settings.templates.enableDateControls",
+																						"Enable date controls",
+																					)}
+																				</FormLabel>
+																				<Switch
+																					size="sm"
+																					isChecked={options.chart.enableDateControls}
+																					onChange={(event) =>
+																						setOptions((prev) => ({
+																							...prev,
+																							chart: {
+																								...prev.chart,
+																								enableDateControls: event.target.checked,
+																							},
+																						}))
+																					}
+																				/>
+																			</FormControl>
+																			<FormControl display="flex" alignItems="center">
+																				<FormLabel mb={0} fontSize="sm" flex="1">
+																					{t(
+																						"settings.templates.enableQuickRanges",
+																						"Show quick range buttons",
+																					)}
+																				</FormLabel>
+																				<Switch
+																					size="sm"
+																					isDisabled={!options.chart.enableDateControls}
+																					isChecked={options.chart.showQuickRanges}
+																					onChange={(event) =>
+																						setOptions((prev) => ({
+																							...prev,
+																							chart: {
+																								...prev.chart,
+																								showQuickRanges: event.target.checked,
+																							},
+																						}))
+																					}
+																				/>
+																			</FormControl>
+																			<FormControl display="flex" alignItems="center">
+																				<FormLabel mb={0} fontSize="sm" flex="1">
+																					{t(
+																						"settings.templates.enableCalendar",
+																						"Show calendar inputs",
+																					)}
+																				</FormLabel>
+																				<Switch
+																					size="sm"
+																					isDisabled={!options.chart.enableDateControls}
+																					isChecked={options.chart.showCalendar}
+																					onChange={(event) =>
+																						setOptions((prev) => ({
+																							...prev,
+																							chart: {
+																								...prev.chart,
+																								showCalendar: event.target.checked,
+																							},
+																						}))
+																					}
+																				/>
+																			</FormControl>
+																			<FormControl>
+																				<FormLabel fontSize="sm" mb={1}>
+																					{t(
+																						"settings.templates.defaultRangeDays",
+																						"Default range (days)",
+																					)}
+																				</FormLabel>
+																				<Input
+																					size="sm"
+																					type="number"
+																					min={1}
+																					max={120}
+																					value={options.chart.defaultRangeDays}
+																					onChange={(event) => {
+																						const next = Number(event.target.value);
+																						setOptions((prev) => ({
+																							...prev,
+																							chart: {
+																								...prev.chart,
+																								defaultRangeDays:
+																									Number.isFinite(next) && next > 0
+																										? Math.min(120, Math.max(1, Math.round(next)))
+																										: prev.chart.defaultRangeDays,
+																							},
+																						}));
+																					}}
+																				/>
+																			</FormControl>
+																		</>
+																	) : null}
 
-															{widget.type === "online_status" ? (
-																<FormControl>
-																	<FormLabel fontSize="sm" mb={1}>
-																		{t(
-																			"settings.templates.onlineThresholdMinutes",
-																			"Online threshold (minutes)",
-																		)}
-																	</FormLabel>
-																	<Input
-																		size="sm"
-																		type="number"
-																		min={1}
-																		max={1440}
-																		value={options.activity.onlineThresholdMinutes}
-																		onChange={(event) => {
-																			const next = Number(event.target.value);
-																			setOptions((prev) => ({
-																				...prev,
-																				activity: {
-																					...prev.activity,
-																					onlineThresholdMinutes:
-																						Number.isFinite(next) && next > 0
-																							? Math.min(
-																									1440,
-																									Math.max(1, Math.round(next)),
-																							  )
-																							: prev.activity.onlineThresholdMinutes,
-																				},
-																			}));
-																		}}
-																	/>
-																</FormControl>
-															) : null}
+																	{widget.type === "online_status" ? (
+																		<FormControl>
+																			<FormLabel fontSize="sm" mb={1}>
+																				{t(
+																					"settings.templates.onlineThresholdMinutes",
+																					"Online threshold (minutes)",
+																				)}
+																			</FormLabel>
+																			<Input
+																				size="sm"
+																				type="number"
+																				min={1}
+																				max={1440}
+																				value={options.activity.onlineThresholdMinutes}
+																				onChange={(event) => {
+																					const next = Number(event.target.value);
+																					setOptions((prev) => ({
+																						...prev,
+																						activity: {
+																							...prev.activity,
+																							onlineThresholdMinutes:
+																								Number.isFinite(next) && next > 0
+																									? Math.min(
+																											1440,
+																											Math.max(1, Math.round(next)),
+																									  )
+																									: prev.activity.onlineThresholdMinutes,
+																						},
+																					}));
+																				}}
+																			/>
+																		</FormControl>
+																	) : null}
 
-															{widget.type === "app_imports" ? (
-																<>{renderAppImportsSettings()}</>
+																	{widget.type === "app_imports" ? (
+																		<>{renderAppImportsSettings()}</>
+																	) : null}
+																</Stack>
 															) : null}
-														</Stack>
-													) : null}
-												</Box>
-											</Box>
-										</Rnd>
-									);
-								})}
+														</Box>
+													</Box>
+												</Rnd>
+											);
+										})}
+										</Box>
+									</Box>
 								</Box>
-							</Box>
+							)}
 						</Box>
 					)}
 				</Box>
