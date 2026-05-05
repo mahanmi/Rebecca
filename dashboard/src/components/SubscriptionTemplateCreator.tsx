@@ -2088,14 +2088,13 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		.rb-widget:hover { box-shadow:var(--rb-shadow-md); }
 		.rb-widget h3 {
 			margin:0 0 calc(var(--rb-widget-gap) + 2px);
-			font-size:clamp(.78rem,2.2cqi,.88rem);
+			font-size:clamp(.68rem,1.8cqi,.78rem);
 			font-weight:600;
 			line-height:1.25;
 			overflow-wrap:anywhere;
 			color:var(--text-secondary);
-			letter-spacing:.01em;
+			letter-spacing:.04em;
 			text-transform:uppercase;
-			font-size:clamp(.68rem,1.8cqi,.78rem);
 		}
 		.rb-widget[data-density="compact"] { --rb-widget-pad:12px; --rb-widget-gap:7px; }
 		.rb-widget[data-density="mini"] { --rb-widget-pad:10px; --rb-widget-gap:6px; }
