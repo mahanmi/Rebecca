@@ -73,7 +73,8 @@ type WidgetType =
 	| "subscription_url"
 	| "links"
 	| "usage_chart"
-	| "app_imports";
+	| "app_imports"
+	| "guide";
 
 type BuilderWidget = {
 	id: string;
@@ -211,16 +212,9 @@ type PreviewDevice = "desktop" | "tablet" | "mobile";
 
 const WIDGETS: WidgetDef[] = [
 	{
-		type: "usage_summary",
-		label: "Usage Summary",
-		description: "Used, total and progress bar",
-		defaultSize: "full",
-		preview: "14.2 GB / 40 GB",
-	},
-	{
 		type: "username",
 		label: "Username",
-		description: "Account username card",
+		description: "Account username display",
 		defaultSize: "half",
 		preview: "demo-user",
 	},
@@ -234,30 +228,51 @@ const WIDGETS: WidgetDef[] = [
 	{
 		type: "online_status",
 		label: "Online Status",
-		description: "Online/offline + last online",
+		description: "Online/offline + last seen",
 		defaultSize: "half",
-		preview: "Online now / Last seen 2m ago",
+		preview: "Online now",
 	},
 	{
 		type: "expire_details",
 		label: "Expire Details",
-		description: "Remaining days, expire date, created at",
+		description: "Days left and expiry date",
 		defaultSize: "full",
-		preview: "12 days left - 2026-03-01",
+		preview: "12 days left",
+	},
+	{
+		type: "usage_summary",
+		label: "Usage Summary",
+		description: "Used, total and progress bar",
+		defaultSize: "full",
+		preview: "14.2 GB / 40 GB",
 	},
 	{
 		type: "subscription_url",
-		label: "Subscription URL",
-		description: "Current subscription URL + copy",
+		label: "Connect (Primary Action)",
+		description: "Open in app + copy subscription link",
 		defaultSize: "full",
-		preview: "https://panel/sub/...",
+		preview: "Open in App / Copy Link",
 	},
 	{
 		type: "links",
 		label: "Config Links",
-		description: "Generated vmess/vless links",
+		description: "Individual config links with copy/QR",
 		defaultSize: "full",
 		preview: "vmess://..., vless://...",
+	},
+	{
+		type: "app_imports",
+		label: "Apps",
+		description: "Install/open app buttons per OS",
+		defaultSize: "full",
+		preview: "v2rayNG, sing-box, Clash...",
+	},
+	{
+		type: "guide",
+		label: "Step-by-Step Guide",
+		description: "How-to connect instructions",
+		defaultSize: "full",
+		preview: "Step 1: Copy link → Step 2: Install app...",
 	},
 	{
 		type: "usage_chart",
@@ -266,25 +281,18 @@ const WIDGETS: WidgetDef[] = [
 		defaultSize: "full",
 		preview: "Last 14 days",
 	},
-	{
-		type: "app_imports",
-		label: "Add To Apps",
-		description: "Direct import buttons for common clients",
-		defaultSize: "full",
-		preview: "v2rayNG, sing-box, Clash Verge...",
-	},
 ];
 
 const DEFAULT_LAYOUT: WidgetType[] = [
-	"usage_summary",
 	"username",
 	"status",
 	"online_status",
 	"expire_details",
+	"usage_summary",
 	"subscription_url",
 	"links",
-	"usage_chart",
 	"app_imports",
+	"guide",
 ];
 
 const TYPE_SET = new Set<WidgetType>(WIDGETS.map((entry) => entry.type));
@@ -449,6 +457,7 @@ const WIDGET_MIN_DIMENSIONS: Readonly<
 	links: { width: 300, height: 145 },
 	usage_chart: { width: 320, height: 180 },
 	app_imports: { width: 300, height: 150 },
+	guide: { width: 280, height: 160 },
 };
 
 const WIDGET_MAX_DIMENSIONS: Readonly<
@@ -463,6 +472,7 @@ const WIDGET_MAX_DIMENSIONS: Readonly<
 	links: { width: 1200, height: 560 },
 	usage_chart: { width: 1200, height: 620 },
 	app_imports: { width: 1200, height: 560 },
+	guide: { width: 1200, height: 560 },
 };
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -728,6 +738,8 @@ const getDefaultWidgetDimensions = (
 			return { width: fullWidth, height: 250 };
 		case "app_imports":
 			return { width: fullWidth, height: 210 };
+		case "guide":
+			return { width: fullWidth, height: 260 };
 		case "username":
 		case "status":
 		case "online_status":
@@ -1001,8 +1013,8 @@ const DEFAULT_OPTIONS: BuilderOptions = {
 		defaultTheme: "system",
 	},
 	appearance: {
-		pageTitle: "Subscription Dashboard",
-		pageSubtitle: "Manage your subscription links and usage",
+		pageTitle: "My Connection",
+		pageSubtitle: "Connect to your subscription",
 		titlePlacement: "left",
 		titleOffsetX: 0,
 		titleOffsetY: 0,
@@ -1038,56 +1050,54 @@ const buildWidgetTemplate = (
 	options: BuilderOptions,
 ): string => {
 	if (type === "usage_summary") {
-		return `
-<h3 data-i18n="usageSummaryTitle">Usage Summary</h3>
-{% set rb_total_limit = user.data_limit or 0 %}
+		return `{% set rb_total_limit = user.data_limit or 0 %}
 {% set rb_usage_percent = ((user.used_traffic / rb_total_limit) * 100) if rb_total_limit > 0 else 0 %}
-<div class="rb-metrics">
-	<div><span data-i18n="usedLabel">Used</span><strong>{{ user.used_traffic | bytesformat }}</strong></div>
-	<div><span data-i18n="totalLabel">Total</span><strong>{% if user.data_limit %}{{ user.data_limit | bytesformat }}{% else %}∞{% endif %}</strong></div>
-	<div><span data-i18n="progressLabel">Progress</span><strong>{% if rb_total_limit > 0 %}{{ rb_usage_percent | round(0, "floor") | int }}%{% else %}∞{% endif %}</strong></div>
-</div>
-<div class="rb-progress"><span style="width:{% if rb_total_limit > 0 %}{{ rb_usage_percent | round(0, "floor") | int }}{% else %}0{% endif %}%"></span></div>`;
+<div class="rb-id-usage">
+	<div class="rb-id-usage-nums">
+		<span>{{ user.used_traffic | bytesformat }}</span>
+		<span class="rb-id-usage-sep">/</span>
+		<strong>{% if user.data_limit %}{{ user.data_limit | bytesformat }}{% else %}∞{% endif %}</strong>
+	</div>
+	<div class="rb-progress"><span style="width:{% if rb_total_limit > 0 %}{{ rb_usage_percent | round(0, "floor") | int }}{% else %}0{% endif %}%"></span></div>
+</div>`;
 	}
 
 	if (type === "username") {
-		return `
-<h3 data-i18n="usernameTitle">Username</h3>
-<p class="rb-value rb-username-value">{{ user.username }}</p>`;
+		return `<div class="rb-id-name-wrap">
+	<p class="rb-id-name">{{ user.username }}</p>
+</div>`;
 	}
 
 	if (type === "status") {
-		return `
-<h3 data-i18n="statusTitle">Status</h3>
-<p><span class="rb-status rb-status-{{ user.status.value }}">{{ user.status.value }}</span></p>`;
+		return `<div class="rb-id-status-wrap">
+	<span class="rb-status rb-status-{{ user.status.value }}">{{ user.status.value }}</span>
+</div>`;
 	}
 
 	if (type === "online_status") {
-		return `
-<h3 data-i18n="onlineStatusTitle">Online Status</h3>
-<div class="rb-online" data-online-card data-online-at="{% if user.online_at %}{{ user.online_at.isoformat() }}{% endif %}">
-	<p class="rb-value"><span class="rb-online-pill" data-online-pill data-i18n="offlineNow">Offline</span></p>
-	<p class="rb-foot" data-online-last data-hide-on="mini" data-i18n="neverOnline">No online activity yet.</p>
+		return `<div class="rb-id-online" data-online-card data-online-at="{% if user.online_at %}{{ user.online_at.isoformat() }}{% endif %}">
+	<span class="rb-online-pill" data-online-pill data-i18n="offlineNow">Offline</span>
+	<span class="rb-id-online-last" data-online-last data-i18n="neverOnline"></span>
 </div>`;
 	}
 
 	if (type === "expire_details") {
-		return `
-<h3 data-i18n="expireDetailsTitle">Expiration Details</h3>
-<div class="rb-kv" data-expire-card data-expire-ts="{% if user.expire %}{{ user.expire }}{% endif %}" data-created-iso="{% if user.created_at %}{{ user.created_at.isoformat() }}{% endif %}">
-	<div class="rb-kv-days"><span data-i18n="daysLeftLabel">Days Left</span><strong data-expire-days>-</strong></div>
-	<div class="rb-kv-expire" data-hide-on="mini"><span data-i18n="expireAtLabel">Expire At</span><strong data-expire-date>-</strong></div>
-	<div class="rb-kv-created" data-hide-on="mini"><span data-i18n="createdAtLabel">Created At</span><strong data-created-at>-</strong></div>
-</div>
-<p class="rb-foot" data-expire-meta data-hide-on="mini">-</p>`;
+		return `<div class="rb-id-expire" data-expire-card data-expire-ts="{% if user.expire %}{{ user.expire }}{% endif %}" data-created-iso="{% if user.created_at %}{{ user.created_at.isoformat() }}{% endif %}">
+	<strong data-expire-days>-</strong>
+	<span class="rb-id-expire-label" data-i18n="daysLeftLabel">days left</span>
+	<span class="rb-id-expire-sep">·</span>
+	<span class="rb-id-expire-date" data-expire-date>-</span>
+</div>`;
 	}
 
 	if (type === "subscription_url") {
-		return `
-<h3 data-i18n="subscriptionUrlTitle">Subscription URL</h3>
-<div class="rb-row">
-	<input class="rb-input" data-current-url data-hide-on="mini" readonly>
-	<button class="rb-btn" data-copy-current-url data-copy-label="Copy URL" data-i18n="copyUrlButton">Copy URL</button>
+		return `<p class="rb-connect-hint" data-i18n="connectHint">Use the buttons below to connect or copy your subscription link.</p>
+<div class="rb-connect-buttons">
+	<button class="rb-btn rb-btn-primary" data-open-in-app data-copy-label="Open in App" data-i18n="openInApp">Open in App</button>
+	<button class="rb-btn rb-btn-outline" data-copy-current-url data-copy-label="Copy Link" data-i18n="copyUrlButton">Copy Link</button>
+</div>
+<div class="rb-connect-url">
+	<input class="rb-input" data-current-url readonly>
 </div>`;
 	}
 
@@ -1095,11 +1105,10 @@ const buildWidgetTemplate = (
 		const copyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>`;
 		const qrIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4z"></path><path d="M14 4h6v6h-6z"></path><path d="M4 14h6v6H4z"></path><path d="M14 14h2v2h-2z"></path><path d="M18 14h2v2h-2z"></path><path d="M14 18h2v2h-2z"></path><path d="M18 18h2v2h-2z"></path></svg>`;
 		const qrButton = options.configLinks.enableQrModal
-			? `<button class="rb-btn rb-icon-btn" data-open-config-qr data-hide-on="mini" data-copy-label="QR" data-i18n-title="qrButton" title="QR" aria-label="QR"><span class="rb-sr" data-i18n="qrButton">QR</span>${qrIcon}</button>`
+			? `<button class="rb-btn rb-icon-btn" data-open-config-qr data-copy-label="QR" data-i18n-title="qrButton" title="QR" aria-label="QR"><span class="rb-sr" data-i18n="qrButton">QR</span>${qrIcon}</button>`
 			: "";
 
-		return `
-<h3 data-i18n="configLinksTitle">Config Links</h3>
+		return `<h2 class="rb-section-title" data-i18n="configLinksTitle">Config Links</h2>
 {% if user.links %}
 <ul class="rb-list" data-config-list>
 	{% for link in user.links %}
@@ -1138,11 +1147,10 @@ const buildWidgetTemplate = (
 			: "";
 
 		const controls = options.chart.enableDateControls
-			? `<div class="rb-chart-controls" data-hide-on="mini">${quickRanges}${calendar}</div>`
+			? `<div class="rb-chart-controls">${quickRanges}${calendar}</div>`
 			: "";
 
-		return `
-<h3 data-i18n="usageChartTitle">Usage Chart</h3>
+		return `<h2 class="rb-section-title" data-i18n="usageChartTitle">Usage Chart</h2>
 ${controls}
 <div class="rb-chart" data-usage-chart data-default-days="${options.chart.defaultRangeDays}">
 	<p class="rb-empty" data-i18n="loadingUsage">Loading usage data...</p>
@@ -1150,14 +1158,47 @@ ${controls}
 	}
 
 	if (type === "app_imports") {
-		return `
-<h3 data-i18n="appImportsTitle">Add To Apps</h3>
-<p class="rb-empty" data-hide-on="mini" data-i18n="appImportsHint">Tap an app to import this subscription directly.</p>
-	<div class="rb-app-imports" data-app-imports>
-		<div class="rb-app-tabs" data-app-tabs role="tablist"></div>
-		<div class="rb-app-grid" data-app-grid></div>
-		<p class="rb-empty" data-app-empty data-i18n="noAppsSelected" hidden>No app button is enabled.</p>
+		return `<h2 class="rb-section-title" data-i18n="appImportsTitle">Apps</h2>
+<p class="rb-apps-hint" data-i18n="appImportsHint">Tap an app to import this subscription directly.</p>
+<div class="rb-app-imports" data-app-imports>
+	<div class="rb-app-tabs" data-app-tabs role="tablist"></div>
+	<div class="rb-app-grid" data-app-grid></div>
+	<p class="rb-empty" data-app-empty data-i18n="noAppsSelected" hidden>No app button is enabled.</p>
 </div>`;
+	}
+
+	if (type === "guide") {
+		return `<h2 class="rb-section-title" data-i18n="guideTitle">How to Connect</h2>
+<ol class="rb-guide-steps">
+	<li class="rb-guide-step">
+		<span class="rb-guide-step-num">1</span>
+		<div class="rb-guide-step-body">
+			<p class="rb-guide-step-title" data-i18n="guideStep1Title">Copy your subscription link</p>
+			<p class="rb-guide-step-desc" data-i18n="guideStep1Desc">Use the Copy Link button in the Connect section above.</p>
+		</div>
+	</li>
+	<li class="rb-guide-step">
+		<span class="rb-guide-step-num">2</span>
+		<div class="rb-guide-step-body">
+			<p class="rb-guide-step-title" data-i18n="guideStep2Title">Install a compatible app</p>
+			<p class="rb-guide-step-desc" data-i18n="guideStep2Desc">See the Apps section to download an app for your device.</p>
+		</div>
+	</li>
+	<li class="rb-guide-step">
+		<span class="rb-guide-step-num">3</span>
+		<div class="rb-guide-step-body">
+			<p class="rb-guide-step-title" data-i18n="guideStep3Title">Add your subscription</p>
+			<p class="rb-guide-step-desc" data-i18n="guideStep3Desc">In the app, add a new subscription and paste your copied link.</p>
+		</div>
+	</li>
+	<li class="rb-guide-step">
+		<span class="rb-guide-step-num">4</span>
+		<div class="rb-guide-step-body">
+			<p class="rb-guide-step-title" data-i18n="guideStep4Title">Connect</p>
+			<p class="rb-guide-step-desc" data-i18n="guideStep4Desc">Enable the VPN in the app and start browsing securely.</p>
+		</div>
+	</li>
+</ol>`;
 	}
 
 	return "";
@@ -1717,22 +1758,54 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 		: "";
 
 	const scriptConfig = serializeForInlineJsonScript(optionsWithImage);
-	const sections = normalizedWidgets
-		.map((widget, index) => {
-			const bounds = clampOutputBounds(
-				widget.type,
-				widget.bounds,
-				canvasWidth,
-				canvasHeight,
-			);
-			const min = getWidgetMinDimensions(widget.type);
-			const max = getWidgetMaxDimensions(widget.type, canvasWidth, canvasHeight);
-			const className = `rb-widget rb-widget-${widget.type}`;
-			const widgetHtml = buildWidgetTemplate(widget.type, options);
-			const colSpan = bounds.width >= canvasWidth * 0.55 ? 2 : 1;
-			return `<section class="${className}" data-col-span="${colSpan}" style="left:${Math.round(bounds.x)}px;top:${Math.round(bounds.y)}px;width:${Math.round(bounds.width)}px;height:${Math.round(bounds.height)}px;min-width:${min.width}px;min-height:${min.height}px;max-width:${max.width}px;max-height:${max.height}px;z-index:${index + 1};">${widgetHtml}</section>`;
+
+	// Semantic order for output sections
+	const IDENTITY_TYPES = new Set<WidgetType>([
+		"username",
+		"status",
+		"online_status",
+		"expire_details",
+		"usage_summary",
+	]);
+	const SEMANTIC_ORDER: readonly WidgetType[] = [
+		"username",
+		"status",
+		"online_status",
+		"expire_details",
+		"usage_summary",
+		"subscription_url",
+		"links",
+		"app_imports",
+		"guide",
+		"usage_chart",
+	];
+	const seenTypes = new Set<WidgetType>();
+	const orderedWidgets = SEMANTIC_ORDER.map((type) =>
+		normalizedWidgets.find((w) => w.type === type),
+	).filter((w): w is BuilderWidget => {
+		if (!w) return false;
+		if (seenTypes.has(w.type)) return false;
+		seenTypes.add(w.type);
+		return true;
+	});
+
+	const identityWidgets = orderedWidgets.filter((w) => IDENTITY_TYPES.has(w.type));
+	const mainWidgets = orderedWidgets.filter((w) => !IDENTITY_TYPES.has(w.type));
+
+	const identitySection =
+		identityWidgets.length > 0
+			? `<section class="rb-section rb-section-identity">\n${identityWidgets.map((w) => buildWidgetTemplate(w.type, options)).join("\n")}\n</section>`
+			: "";
+
+	const mainSections = mainWidgets
+		.map((w) => {
+			const extraClass = w.type === "links" ? " rb-widget-links" : "";
+			return `<section class="rb-section rb-section-${w.type}${extraClass}">${buildWidgetTemplate(w.type, options)}</section>`;
 		})
 		.join("\n");
+
+	const sections =
+		identitySection + (identitySection && mainSections ? "\n" : "") + mainSections;
 
 	const qrModal = options.configLinks.enableQrModal
 		? `<div class="rb-modal" data-config-qr-modal hidden>
@@ -1800,794 +1873,6 @@ const buildTemplateHtml = (widgets: BuilderWidget[], options: BuilderOptions): s
 			--primary-light:color-mix(in srgb,var(--primary) 12%, transparent);
 			--primary-hover:color-mix(in srgb,var(--primary) 88%, #000);
 			--rb-topbar-bg:rgba(15,23,42,.92);
-			--rb-topbar-border:rgba(148,163,184,.22);
-			--rb-gap:12px;
-			--rb-gap-sm:8px;
-			--rb-gap-xs:6px;
-			--rb-pad:16px;
-			--rb-radius:14px;
-			--rb-radius-sm:10px;
-			--rb-btn-height:36px;
-			--rb-shadow:0 1px 3px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
-			--rb-shadow-md:0 2px 8px rgba(15,23,42,.08),0 8px 24px rgba(15,23,42,.08);
-		}
-		*,*::before,*::after { box-sizing:border-box; }
-		html,body { width:100%; max-width:100%; height:auto; min-height:100%; overflow-x:hidden; }
-		body {
-			margin:0;
-			min-height:100vh;
-			padding:clamp(12px,2.2vw,24px) clamp(10px,2vw,20px) clamp(14px,2vw,20px);
-			color:var(--text);
-			font-family:-apple-system,"Segoe UI",Roboto,sans-serif;
-			line-height:1.5;
-			transition:background .25s,color .25s;
-			overflow-y:auto;
-			-webkit-overflow-scrolling:touch;
-		}
-		body.rb-dark {
-			--surface:#0f172a;
-			--surface-elevated:#1e293b;
-			--text:#f1f5f9;
-			--text-secondary:#94a3b8;
-			--muted:#64748b;
-			--border:#1e293b;
-			--border-muted:#0f172a;
-			--primary:#60a5fa;
-			--primary-light:color-mix(in srgb,var(--primary) 14%, transparent);
-		}
-		.rb-topbar {
-			position:sticky;
-			top:0;
-			z-index:999;
-			width:100%;
-			max-width:min(100%, ${canvasWidth}px);
-			margin:0 auto var(--rb-gap);
-			padding:10px 14px;
-			border:1px solid var(--rb-topbar-border);
-			border-radius:var(--rb-radius);
-			background:var(--rb-topbar-bg);
-			display:grid;
-			grid-template-columns:minmax(0,1fr) auto;
-			align-items:center;
-			min-height:66px;
-			gap:var(--rb-gap);
-			box-shadow:0 4px 16px rgba(15,23,42,.10),0 1px 4px rgba(15,23,42,.08);
-			-webkit-backdrop-filter:blur(16px) saturate(160%);
-			backdrop-filter:blur(16px) saturate(160%);
-			isolation:isolate;
-		}
-		.rb-topbar[data-title-placement="center"] {
-			grid-template-columns:minmax(0,1fr);
-			justify-items:center;
-			text-align:center;
-		}
-		.rb-topbar[data-title-placement="center"] .rb-topbar-main { justify-items:center; text-align:center; }
-		.rb-topbar[data-title-placement="center"] .rb-topbar-actions { width:100%; justify-content:center; }
-		.rb-topbar[data-title-placement="hidden"] {
-			grid-template-columns:auto;
-			justify-content:flex-end;
-			min-height:56px;
-		}
-		.rb-topbar[data-title-placement="hidden"] .rb-topbar-main { display:none; }
-		.rb-topbar-main {
-			display:grid;
-			gap:4px;
-			min-width:0;
-			max-width:100%;
-			transform:translate(var(--rb-title-offset-x, 0px), var(--rb-title-offset-y, 0px));
-			position:relative;
-			z-index:2;
-		}
-		.rb-topbar-title { margin:0; font-size:clamp(1.08rem,1vw + .95rem,1.45rem); line-height:1.2; overflow-wrap:anywhere; }
-		.rb-topbar-subtitle { margin:0; color:var(--muted); font-size:.88rem; overflow-wrap:anywhere; }
-		.rb-topbar-actions {
-			display:flex;
-			flex-wrap:wrap;
-			align-items:center;
-			justify-content:flex-end;
-			gap:8px;
-			min-width:0;
-			position:relative;
-			z-index:2;
-		}
-		.rb-topbar-overlay {
-			position:absolute;
-			inset:0;
-			z-index:1;
-			pointer-events:none;
-			overflow:hidden;
-		}
-		.rb-header-text {
-			position:absolute;
-			display:inline-block;
-			max-width:calc(100% - 12px);
-			white-space:nowrap;
-			overflow:hidden;
-			text-overflow:ellipsis;
-			line-height:1.2;
-			pointer-events:none;
-			text-shadow:0 1px 1px rgba(2,6,23,.35);
-		}
-		.rb-topbar-links {
-			display:flex;
-			flex-wrap:wrap;
-			align-items:center;
-			justify-content:flex-end;
-			gap:6px;
-			min-width:0;
-			font-size:.8rem;
-		}
-		.rb-topbar-links a {
-			color:var(--primary);
-			text-decoration:none;
-			white-space:nowrap;
-		}
-		.rb-topbar-sep {
-			color:var(--muted);
-			white-space:nowrap;
-		}
-		.rb-page {
-			width:100%;
-			max-width:min(100%, ${canvasWidth}px);
-			margin:0 auto;
-			display:grid;
-			gap:var(--rb-gap);
-			min-width:0;
-			container-type:inline-size;
-			container-name:rb-page;
-		}
-		.rb-user-chip {
-			display:inline-flex;
-			align-items:center;
-			border:1px solid var(--border);
-			background:var(--surface);
-			color:var(--text);
-			border-radius:999px;
-			padding:4px 9px;
-			font-size:.78rem;
-			min-width:0;
-			max-width:100%;
-		}
-		.rb-user-trigger {
-			height:var(--rb-btn-height);
-			padding:0 10px;
-			gap:8px;
-			cursor:pointer;
-			font-size:.78rem;
-		}
-		.rb-user-name {
-			min-width:0;
-			overflow:hidden;
-			text-overflow:ellipsis;
-			white-space:nowrap;
-			font-weight:600;
-		}
-		.rb-user-caret {
-			color:var(--muted);
-			font-size:.68rem;
-			flex:0 0 auto;
-		}
-		/* FIX: compact username dropdown language/theme */
-		.rb-profile-menu { position:relative; min-width:0; max-width:100%; }
-		.rb-profile-dropdown {
-			position:absolute;
-			inset-inline-end:0;
-			top:calc(100% + 6px);
-			z-index:200;
-			width:min(252px,calc(100vw - 24px));
-			max-width:calc(100vw - 24px);
-			max-height:min(70vh, 360px);
-			overflow-y:auto;
-			background:var(--surface);
-			color:var(--text);
-			border:1px solid var(--border);
-			border-radius:10px;
-			padding:6px;
-			display:grid;
-			gap:4px;
-			transform-origin:top right;
-			box-shadow:0 8px 18px rgba(2,6,23,.14);
-		}
-		.rb-profile-dropdown[hidden], .rb-submenu[hidden] { display:none !important; }
-		.rb-menu-item {
-			height:28px;
-			border:1px solid var(--border);
-			border-radius:8px;
-			background:var(--surface);
-			color:var(--text);
-			padding:0 7px;
-			display:flex;
-			align-items:center;
-			justify-content:space-between;
-			gap:6px;
-			font-size:.74rem;
-			cursor:pointer;
-			text-align:start;
-		}
-		.rb-menu-item[aria-expanded="true"] {
-			border-color:color-mix(in srgb,var(--primary) 55%, var(--border));
-			color:var(--primary);
-		}
-		.rb-menu-label {
-			display:inline-flex;
-			align-items:center;
-			gap:6px;
-			min-width:0;
-		}
-		.rb-menu-label svg {
-			width:14px;
-			height:14px;
-			flex:0 0 auto;
-		}
-		.rb-menu-value {
-			flex:0 0 auto;
-			font-size:.72rem;
-			color:var(--muted);
-			white-space:nowrap;
-			max-width:48%;
-			overflow:hidden;
-			text-overflow:ellipsis;
-		}
-		.rb-submenu { display:grid; gap:4px; }
-		.rb-submenu-btn {
-			height:26px;
-			padding:0 7px;
-			font-size:.72rem;
-			text-align:start;
-			justify-content:flex-start;
-		}
-		.rb-lang-option {
-			display:flex;
-			align-items:center;
-			gap:6px;
-		}
-		.rb-lang-flag {
-			font-size:.82rem;
-			line-height:1;
-			flex:0 0 auto;
-		}
-		.rb-submenu-btn.is-active {
-			border-color:var(--primary);
-			color:var(--primary);
-			background:color-mix(in srgb,var(--primary) 10%, var(--surface));
-		}
-		.rb-layout-shell {
-			width:100%;
-			max-width:100%;
-			overflow:auto;
-			-webkit-overflow-scrolling:touch;
-		}
-		.rb-layout {
-			position:relative;
-			width:${canvasWidth}px;
-			min-width:${canvasWidth}px;
-			height:${outputLayoutHeight}px;
-			min-height:${outputLayoutHeight}px;
-			max-width:${canvasWidth}px;
-			max-height:${outputLayoutHeight}px;
-			margin:0 auto;
-		}
-		.rb-widget {
-			--rb-widget-pad:var(--rb-pad);
-			--rb-widget-gap:var(--rb-gap-sm);
-			position:absolute;
-			background:var(--surface);
-			border:1px solid var(--border);
-			border-radius:var(--rb-radius);
-			padding:var(--rb-widget-pad);
-			overflow:hidden;
-			display:flex;
-			flex-direction:column;
-			gap:var(--rb-widget-gap);
-			container-type:inline-size;
-			min-width:0;
-			min-height:0;
-			box-shadow:var(--rb-shadow);
-			transition:box-shadow .2s;
-		}
-		.rb-widget:hover { box-shadow:var(--rb-shadow-md); }
-		.rb-widget h3 {
-			margin:0 0 calc(var(--rb-widget-gap) + 2px);
-			font-size:clamp(.68rem,1.8cqi,.78rem);
-			font-weight:600;
-			line-height:1.25;
-			overflow-wrap:anywhere;
-			color:var(--text-secondary);
-			letter-spacing:.04em;
-			text-transform:uppercase;
-		}
-		.rb-widget[data-density="compact"] { --rb-widget-pad:12px; --rb-widget-gap:7px; }
-		.rb-widget[data-density="mini"] { --rb-widget-pad:10px; --rb-widget-gap:6px; }
-		.rb-widget[data-density="compact"] h3 { font-size:.88rem; }
-		.rb-widget[data-density="mini"] h3 { font-size:.82rem; }
-		.rb-widget[data-density="compact"] [data-hide-on~="compact"] { display:none !important; }
-		.rb-widget[data-density="mini"] [data-hide-on~="compact"], .rb-widget[data-density="mini"] [data-hide-on~="mini"] { display:none !important; }
-		.rb-value { margin:0; font-size:1.15rem; font-weight:700; line-height:1.2; overflow-wrap:anywhere; color:var(--text); }
-		.rb-username-value { font-size:clamp(.95rem,4.4cqi,1.45rem); }
-		.rb-widget[data-density="compact"] .rb-value { font-size:.98rem; }
-		.rb-widget[data-density="mini"] .rb-value { font-size:.9rem; }
-		.rb-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--rb-gap-sm); }
-		.rb-widget-usage_summary .rb-metrics { grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); align-items:start; }
-		.rb-widget-usage_summary .rb-metrics > div { min-width:0; }
-		.rb-metrics span { font-size:.68rem; color:var(--muted); display:block; text-transform:uppercase; letter-spacing:.04em; font-weight:500; }
-		.rb-metrics strong { font-size:.92rem; display:block; line-height:1.22; overflow-wrap:anywhere; word-break:break-word; font-weight:600; color:var(--text); }
-		.rb-widget[data-density="compact"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
-		.rb-widget[data-density="mini"] .rb-metrics { grid-template-columns:1fr; gap:6px; }
-		.rb-widget-usage_summary[data-density="compact"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-		.rb-widget-usage_summary[data-density="mini"] .rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-		.rb-progress { height:6px; border-radius:999px; overflow:hidden; margin-top:8px; background:color-mix(in srgb,var(--primary) 14%, var(--surface-elevated)); }
-		.rb-progress span { height:100%; display:block; background:linear-gradient(90deg, var(--primary), color-mix(in srgb,var(--primary) 72%, #8b5cf6)); border-radius:999px; transition:width .4s ease; }
-		.rb-status { display:inline-flex; padding:4px 12px; border-radius:999px; color:#fff; text-transform:capitalize; font-size:.74rem; font-weight:700; letter-spacing:.02em; }
-		.rb-status-active { background:linear-gradient(135deg,#16a34a,#15803d); } .rb-status-limited { background:linear-gradient(135deg,#dc2626,#b91c1c); } .rb-status-expired { background:linear-gradient(135deg,#f59e0b,#d97706); } .rb-status-disabled { background:linear-gradient(135deg,#64748b,#475569); }
-		.rb-online-pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 12px; color:#fff; font-size:.74rem; font-weight:700; letter-spacing:.02em; }
-		.rb-online-pill.is-online { background:linear-gradient(135deg,#16a34a,#15803d); }
-		.rb-online-pill.is-offline { background:linear-gradient(135deg,#64748b,#475569); }
-		.rb-kv { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--rb-gap-sm); }
-		.rb-kv span { font-size:.68rem; color:var(--muted); display:block; text-transform:uppercase; letter-spacing:.04em; font-weight:500; }
-		.rb-kv strong { font-size:.9rem; display:block; line-height:1.3; overflow-wrap:anywhere; word-break:break-word; font-weight:600; color:var(--text); }
-		.rb-widget-expire_details .rb-kv { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 10px; }
-		.rb-widget-expire_details .rb-kv-created { grid-column:1 / -1; }
-		.rb-widget[data-density="compact"] .rb-kv { gap:7px; }
-		.rb-widget[data-density="mini"] .rb-kv { grid-template-columns:1fr; gap:6px; }
-		.rb-row { display:flex; align-items:center; gap:var(--rb-gap-xs); min-width:0; }
-		.rb-input {
-			flex:1;
-			min-width:0;
-			height:var(--rb-btn-height);
-			border:1px solid var(--border);
-			border-radius:8px;
-			padding:0 10px;
-			font-size:.8rem;
-			background:var(--surface);
-			color:var(--text);
-		}
-		.rb-btn {
-			height:var(--rb-btn-height);
-			border:1px solid var(--border);
-			border-radius:var(--rb-radius-sm);
-			background:var(--surface);
-			color:var(--text);
-			padding:0 12px;
-			font-size:.78rem;
-			font-weight:500;
-			line-height:1;
-			cursor:pointer;
-			white-space:nowrap;
-			max-width:100%;
-			overflow:hidden;
-			text-overflow:ellipsis;
-			transition:background .15s, border-color .15s, box-shadow .15s;
-		}
-		.rb-btn:hover { background:var(--surface-elevated); border-color:color-mix(in srgb,var(--border) 80%, var(--primary)); }
-		.rb-btn:active { background:var(--primary-light); }
-		.rb-widget[data-density="mini"] .rb-btn { font-size:.72rem; }
-		.rb-icon-btn {
-			position:relative;
-			width:30px;
-			min-width:30px;
-			height:30px;
-			padding:0;
-			display:inline-flex;
-			align-items:center;
-			justify-content:center;
-			font-size:.72rem;
-		}
-		.rb-icon-btn svg { width:14px; height:14px; }
-		.rb-icon-btn.is-copied { border-color:var(--primary); color:var(--primary); }
-		.rb-sr { position:absolute; width:1px; height:1px; margin:-1px; border:0; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
-		img.twemoji-emoji { display:inline-block; height:1.2em; width:1.2em; margin:0 .1em; vertical-align:-.1em; }
-		.rb-empty { margin:0; color:var(--muted); font-size:.8rem; }
-		.rb-list { list-style:none; margin:0; padding:0; display:grid; gap:var(--rb-gap-xs); }
-		.rb-widget-links { position:relative; }
-		.rb-widget-links .rb-list {
-			max-height:calc(100% - 56px);
-			overflow:auto;
-			padding-right:2px;
-			-webkit-overflow-scrolling:touch;
-		}
-		.rb-widget-links .rb-list.is-scrollable {
-			padding:6px;
-			padding-right:8px;
-			border-radius:10px;
-			border:1px solid color-mix(in srgb,var(--border) 62%, transparent);
-			background:
-				linear-gradient(
-					145deg,
-					color-mix(in srgb,var(--surface) 72%, transparent),
-					color-mix(in srgb,var(--surface) 56%, transparent)
-				);
-			-webkit-backdrop-filter: blur(10px) saturate(130%);
-			backdrop-filter: blur(10px) saturate(130%);
-			box-shadow:
-				inset 0 1px 0 color-mix(in srgb,#ffffff 26%, transparent),
-				inset 0 -1px 0 color-mix(in srgb,var(--border) 46%, transparent);
-		}
-		.rb-widget-links.has-scroll .rb-list.is-scrollable::before,
-		.rb-widget-links.has-scroll .rb-list.is-scrollable::after {
-			content:"";
-			position:sticky;
-			left:0;
-			right:0;
-			display:block;
-			height:13px;
-			pointer-events:none;
-			z-index:2;
-			opacity:1;
-			transition:opacity .18s ease;
-		}
-		.rb-widget-links.has-scroll .rb-list.is-scrollable::before {
-			top:0;
-			margin-bottom:-13px;
-			background:linear-gradient(
-				to bottom,
-				color-mix(in srgb,var(--surface) 90%, transparent),
-				transparent
-			);
-		}
-		.rb-widget-links.has-scroll .rb-list.is-scrollable::after {
-			bottom:0;
-			margin-top:-13px;
-			background:linear-gradient(
-				to top,
-				color-mix(in srgb,var(--surface) 92%, transparent),
-				transparent
-			);
-		}
-		.rb-widget-links.scroll-at-top .rb-list.is-scrollable::before { opacity:0; }
-		.rb-widget-links.scroll-at-bottom .rb-list.is-scrollable::after { opacity:0; }
-		.rb-widget-links[data-density="compact"] .rb-list { max-height:calc(100% - 52px); }
-		.rb-widget-links[data-density="mini"] .rb-list { max-height:calc(100% - 48px); }
-		.rb-config-item {
-			border:1px solid var(--border);
-			border-radius:var(--rb-radius-sm);
-			padding:7px 10px;
-			background:var(--surface-elevated);
-			transition:border-color .15s;
-		}
-		.rb-config-item:hover { border-color:color-mix(in srgb,var(--primary) 40%, var(--border)); }
-		.rb-config-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:var(--rb-gap-xs); direction:ltr; }
-		.rb-config-name {
-			font-size:.78rem;
-			font-weight:600;
-			min-width:0;
-			text-align:left;
-			direction:ltr;
-			unicode-bidi:isolate;
-			white-space:nowrap;
-			overflow:hidden;
-			text-overflow:ellipsis;
-		}
-		.rb-config-actions { display:inline-flex; align-items:center; gap:4px; flex:0 0 auto; }
-		.rb-widget[data-density="mini"] .rb-config-name { font-size:.74rem; }
-		.rb-chart { min-height:150px; overflow:hidden; }
-		.rb-widget[data-density="compact"] .rb-chart { min-height:122px; }
-		.rb-widget[data-density="mini"] .rb-chart { min-height:100px; }
-		.rb-chart-controls { display:grid; gap:var(--rb-gap-sm); margin-bottom:8px; }
-		.rb-ranges { display:flex; gap:var(--rb-gap-xs); flex-wrap:wrap; }
-		.rb-ranges .rb-btn.is-active { border-color:var(--primary); color:var(--primary); }
-		.rb-calendar { display:grid; gap:var(--rb-gap-xs); grid-template-columns:1fr 1fr auto; }
-		.rb-date-input { max-width:100%; }
-		.rb-bars { display:grid; grid-template-columns:repeat(14,minmax(0,1fr)); gap:6px; align-items:end; min-height:130px; }
-		.rb-bar { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-		.rb-bar-fill { width:100%; background:linear-gradient(to top, var(--primary), color-mix(in srgb,var(--primary) 65%, #8b5cf6)); border-radius:4px 4px 0 0; }
-		.rb-bar-label { font-size:.62rem; color:var(--muted); }
-		.rb-widget[data-density="compact"] .rb-bars { gap:4px; min-height:108px; }
-		.rb-widget[data-density="mini"] .rb-bars { gap:3px; min-height:92px; }
-		.rb-widget[data-density="mini"] .rb-bar-label { display:none; }
-		.rb-foot { margin-top:6px; font-size:.76rem; color:var(--muted); line-height:1.35; }
-		.rb-widget[data-density="compact"] .rb-foot { margin-top:4px; font-size:.73rem; }
-		.rb-widget[data-density="mini"] .rb-foot { margin-top:2px; font-size:.7rem; }
-		/* Profile menu hosts Language + Theme controls in a compact dropdown */
-		.rb-app-imports { display:grid; gap:8px; min-width:0; }
-		.rb-app-tabs {
-			display:flex;
-			align-items:center;
-			gap:6px;
-			overflow-x:auto;
-			padding-bottom:2px;
-			-webkit-overflow-scrolling:touch;
-			scrollbar-width:thin;
-		}
-		.rb-app-tab {
-			height:26px;
-			min-height:26px;
-			padding:0 10px;
-			border:1px solid var(--border);
-			border-radius:999px;
-			background:var(--surface);
-			color:var(--text);
-			font-size:.72rem;
-			font-weight:600;
-			white-space:nowrap;
-			cursor:pointer;
-			flex:0 0 auto;
-		}
-		.rb-app-tab.is-active {
-			border-color:color-mix(in srgb,var(--primary) 55%, var(--border));
-			color:var(--primary);
-			background:color-mix(in srgb,var(--primary) 10%, var(--surface));
-		}
-		.rb-app-grid {
-			display:grid;
-			grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-			gap:var(--rb-gap-sm);
-			min-width:0;
-		}
-		.rb-widget-app_imports .rb-app-grid {
-			max-height:calc(100% - 64px);
-			overflow:auto;
-			padding-right:2px;
-			-webkit-overflow-scrolling:touch;
-		}
-		.rb-app-item {
-			display:grid;
-			grid-template-columns:minmax(0,1fr) auto;
-			align-items:center;
-			gap:8px;
-			border:1px solid var(--border);
-			border-radius:10px;
-			padding:7px 8px;
-			background:color-mix(in srgb,var(--surface) 88%, var(--text) 12%);
-			min-width:0;
-		}
-		.rb-app-main { display:grid; gap:2px; min-width:0; }
-		.rb-app-main-top { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
-		.rb-app-label {
-			font-size:.78rem;
-			font-weight:600;
-			min-width:0;
-			overflow:hidden;
-			text-overflow:ellipsis;
-			white-space:nowrap;
-		}
-		.rb-app-os {
-			font-size:.68rem;
-			color:var(--muted);
-			overflow:hidden;
-			text-overflow:ellipsis;
-			white-space:nowrap;
-		}
-		.rb-app-tag {
-			font-size:.62rem;
-			border:1px solid var(--border);
-			border-radius:999px;
-			padding:2px 6px;
-			color:var(--muted);
-			flex:0 0 auto;
-		}
-		.rb-app-action {
-			height:28px;
-			min-height:28px;
-			padding:0 9px;
-			font-size:.72rem;
-			flex:0 0 auto;
-		}
-		.rb-widget[data-density="compact"] .rb-app-grid, .rb-widget[data-density="mini"] .rb-app-grid { grid-template-columns:1fr; }
-		.rb-widget-app_imports[data-density="compact"] .rb-app-grid { max-height:calc(100% - 58px); }
-		.rb-widget-app_imports[data-density="mini"] .rb-app-grid { max-height:calc(100% - 54px); }
-		.rb-widget[data-density="mini"] .rb-app-tag, .rb-widget[data-density="mini"] .rb-app-os { display:none; }
-		.rb-modal[hidden] { display:none; }
-		.rb-modal { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; }
-		.rb-modal-backdrop { position:absolute; inset:0; background:rgba(15,23,42,.65); }
-		.rb-modal-content {
-			position:relative;
-			z-index:1;
-			width:min(340px,calc(100vw - 24px));
-			background:var(--surface);
-			color:var(--text);
-			border:1px solid var(--border);
-			border-radius:12px;
-			padding:14px;
-			display:grid;
-			gap:8px;
-			justify-items:center;
-		}
-		.rb-modal-close { position:absolute; top:8px; right:8px; padding:2px 8px; height:auto; }
-		#rb-qr-canvas { padding:8px; background:#fff; border-radius:10px; cursor:pointer; }
-		.rb-qr-label,.rb-qr-meta { margin:0; text-align:center; font-size:.8rem; }
-		.rb-qr-meta { color:var(--muted); font-size:.74rem; }
-		.rb-qr-actions { display:flex; gap:6px; }
-
-		@container rb-page (max-width:1200px) {
-			.rb-page {
-				--rb-pad:12px;
-				--rb-gap:10px;
-				--rb-gap-sm:8px;
-				--rb-gap-xs:6px;
-				--rb-btn-height:32px;
-			}
-			.rb-topbar {
-				padding:7px 9px;
-				margin-bottom:6px;
-				min-height:60px;
-				grid-template-columns:minmax(0,1fr);
-				align-items:start;
-			}
-			.rb-topbar-main { transform:none !important; }
-			.rb-topbar-actions { width:100%; justify-content:space-between; }
-			.rb-topbar-links { justify-content:flex-start; }
-			.rb-widget { --rb-widget-pad:11px; --rb-widget-gap:7px; }
-			.rb-widget .rb-btn { font-size:.76rem; }
-			.rb-widget .rb-input { font-size:.78rem; }
-			.rb-menu-item { font-size:.74rem; }
-			.rb-menu-value { font-size:.7rem; }
-			.rb-widget-links .rb-list { max-height:min(42vh,320px); }
-			.rb-widget-app_imports .rb-app-grid { max-height:min(46vh,340px); }
-			.rb-chart { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-			.rb-calendar { grid-template-columns:1fr; }
-			.rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-			.rb-kv { grid-template-columns:repeat(2,minmax(0,1fr)); }
-			.rb-row { flex-direction:column; align-items:stretch; }
-			.rb-app-grid { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
-		}
-
-		@container rb-page (max-width:900px) {
-			/* Responsive flow mode for narrow screens: no overlap, consistent gaps */
-			.rb-layout-shell { overflow:visible; }
-			.rb-layout {
-				width:100%;
-				min-width:0;
-				max-width:100%;
-				height:auto;
-				min-height:0;
-				max-height:none;
-				display:grid;
-				grid-template-columns:repeat(2,minmax(0,1fr));
-				gap:var(--rb-gap);
-				align-items:start;
-			}
-			.rb-widget {
-				position:static !important;
-				inset:auto !important;
-				width:auto !important;
-				height:auto !important;
-				min-width:0 !important;
-				max-width:100% !important;
-				max-height:none !important;
-				z-index:auto !important;
-			}
-			.rb-widget[data-col-span="2"] { grid-column:span 2; }
-		}
-
-		@container rb-page (max-width:560px) {
-			.rb-page {
-				--rb-pad:10px;
-				--rb-gap:8px;
-				--rb-gap-sm:6px;
-				--rb-gap-xs:5px;
-				--rb-btn-height:30px;
-			}
-			.rb-topbar {
-				padding:6px 8px;
-				border-radius:10px;
-				min-height:56px;
-				gap:8px;
-				grid-template-columns:minmax(0,1fr);
-			}
-			.rb-topbar-main { transform:none !important; }
-			.rb-topbar-title { font-size:clamp(1rem,4.8vw,1.18rem); }
-			.rb-topbar-subtitle { font-size:.78rem; }
-			.rb-topbar-actions { width:100%; justify-content:space-between; gap:6px; }
-			.rb-topbar-links { gap:5px; }
-			.rb-user-trigger { font-size:.74rem; padding:0 8px; max-width:min(220px,100%); }
-			.rb-profile-dropdown { width:min(248px,calc(100vw - 20px)); max-width:calc(100vw - 20px); padding:6px; }
-			.rb-menu-item { height:29px; padding:0 7px; font-size:.73rem; }
-			.rb-submenu-btn { height:27px; font-size:.72rem; }
-			.rb-layout { grid-template-columns:1fr; }
-			.rb-widget[data-col-span="2"] { grid-column:span 1; }
-			.rb-widget { --rb-widget-pad:9px; --rb-widget-gap:6px; }
-			.rb-widget h3 { font-size:.82rem; }
-			.rb-metrics { grid-template-columns:1fr; }
-			.rb-kv { grid-template-columns:1fr; }
-			.rb-config-item { padding:5px 7px; }
-			.rb-config-name { font-size:.75rem; }
-			.rb-icon-btn { width:28px; min-width:28px; height:28px; }
-			.rb-widget-links .rb-list { max-height:min(36vh,240px); }
-			.rb-widget-app_imports .rb-app-grid { max-height:min(40vh,260px); }
-			.rb-app-grid { grid-template-columns:1fr; }
-		}
-
-		@supports not (container-type:inline-size) {
-			@media (max-width:1200px) {
-				body { padding:18px 14px 16px; }
-				.rb-page {
-					--rb-pad:12px;
-					--rb-gap:10px;
-					--rb-gap-sm:8px;
-					--rb-gap-xs:6px;
-					--rb-btn-height:32px;
-				}
-				.rb-topbar {
-					padding:7px 9px;
-					margin-bottom:6px;
-					min-height:60px;
-					grid-template-columns:minmax(0,1fr);
-					align-items:start;
-				}
-				.rb-topbar-main { transform:none !important; }
-				.rb-topbar-actions { width:100%; justify-content:space-between; }
-				.rb-topbar-links { justify-content:flex-start; }
-				.rb-widget { --rb-widget-pad:11px; --rb-widget-gap:7px; }
-				.rb-widget .rb-btn { font-size:.76rem; }
-				.rb-widget .rb-input { font-size:.78rem; }
-				.rb-menu-item { font-size:.74rem; }
-				.rb-menu-value { font-size:.7rem; }
-				.rb-widget-links .rb-list { max-height:min(42vh,320px); }
-				.rb-widget-app_imports .rb-app-grid { max-height:min(46vh,340px); }
-				.rb-chart { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-				.rb-calendar { grid-template-columns:1fr; }
-				.rb-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
-				.rb-kv { grid-template-columns:repeat(2,minmax(0,1fr)); }
-				.rb-row { flex-direction:column; align-items:stretch; }
-				.rb-app-grid { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
-			}
-
-			@media (max-width:900px) {
-				.rb-layout-shell { overflow:visible; }
-				.rb-layout {
-					width:100%;
-					min-width:0;
-					max-width:100%;
-					height:auto;
-					min-height:0;
-					max-height:none;
-					display:grid;
-					grid-template-columns:repeat(2,minmax(0,1fr));
-					gap:var(--rb-gap);
-					align-items:start;
-				}
-				.rb-widget {
-					position:static !important;
-					inset:auto !important;
-					width:auto !important;
-					height:auto !important;
-					min-width:0 !important;
-					max-width:100% !important;
-					max-height:none !important;
-					z-index:auto !important;
-				}
-				.rb-widget[data-col-span="2"] { grid-column:span 2; }
-			}
-
-			@media (max-width:560px) {
-				body { padding:12px 10px 14px; }
-				.rb-page {
-					--rb-pad:10px;
-					--rb-gap:8px;
-					--rb-gap-sm:6px;
-					--rb-gap-xs:5px;
-					--rb-btn-height:30px;
-				}
-				.rb-topbar {
-					padding:6px 8px;
-					border-radius:10px;
-					min-height:56px;
-					gap:8px;
-					grid-template-columns:minmax(0,1fr);
-				}
-				.rb-topbar-main { transform:none !important; }
-				.rb-topbar-title { font-size:clamp(1rem,4.8vw,1.18rem); }
-				.rb-topbar-subtitle { font-size:.78rem; }
-				.rb-topbar-actions { width:100%; justify-content:space-between; gap:6px; }
-				.rb-topbar-links { gap:5px; }
-				.rb-user-trigger { font-size:.74rem; padding:0 8px; max-width:min(220px,100%); }
-				.rb-profile-dropdown { width:min(248px,calc(100vw - 20px)); max-width:calc(100vw - 20px); padding:6px; }
-				.rb-menu-item { height:29px; padding:0 7px; font-size:.73rem; }
-				.rb-submenu-btn { height:27px; font-size:.72rem; }
-				.rb-layout { grid-template-columns:1fr; }
-				.rb-widget[data-col-span="2"] { grid-column:span 1; }
-				.rb-widget { --rb-widget-pad:9px; --rb-widget-gap:6px; }
-				.rb-widget h3 { font-size:.82rem; }
-				.rb-metrics { grid-template-columns:1fr; }
-				.rb-kv { grid-template-columns:1fr; }
-				.rb-config-item { padding:5px 7px; }
-				.rb-config-name { font-size:.75rem; }
-				.rb-icon-btn { width:28px; min-width:28px; height:28px; }
-				.rb-widget-links .rb-list { max-height:min(36vh,240px); }
-				.rb-widget-app_imports .rb-app-grid { max-height:min(40vh,260px); }
-				.rb-app-grid { grid-template-columns:1fr; }
-			}
-		}
 	</style>
 	<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -2599,8 +1884,8 @@ ${builderBgImageScript}
 	<header class="rb-topbar" data-title-placement="left">
 		<div class="rb-topbar-overlay" data-header-text-layer aria-hidden="true"></div>
 		<div class="rb-topbar-main">
-			<h1 class="rb-topbar-title" data-page-title>Subscription Dashboard</h1>
-			<p class="rb-topbar-subtitle" data-page-subtitle>Manage your subscription links and usage</p>
+			<h1 class="rb-topbar-title" data-page-title>My Connection</h1>
+			<p class="rb-topbar-subtitle" data-page-subtitle>Connect to your subscription</p>
 		</div>
 		<div class="rb-topbar-actions">
 			<div class="rb-topbar-links">
@@ -2610,10 +1895,8 @@ ${builderBgImageScript}
 			${profileMenu}
 		</div>
 	</header>
-	<div class="rb-layout-shell">
-		<section class="rb-layout">
+	<div class="rb-flow">
 ${sections}
-		</section>
 	</div>
 </main>
 ${qrModal}
@@ -2625,10 +1908,10 @@ ${qrModal}
 	if (!config.appImports) config.appImports = {};
 
 	var dict = {
-		en: { usageSummaryTitle:"Usage Summary", usedLabel:"Used", totalLabel:"Total", progressLabel:"Progress", usernameTitle:"Username", statusTitle:"Status", onlineStatusTitle:"Online Status", onlineNow:"Online", offlineNow:"Offline", lastOnlineLabel:"Last online", neverOnline:"No online activity yet.", expireDetailsTitle:"Expiration Details", daysLeftLabel:"Days Left", expireAtLabel:"Expire At", createdAtLabel:"Created At", unlimited:"Unlimited", expiredAlready:"Expired", daysRemaining:"[[days]] days left", subscriptionUrlTitle:"Subscription URL", copyUrlButton:"Copy URL", configLinksTitle:"Config Links", copyButton:"Copy", qrButton:"QR", noLinks:"No links available.", usageChartTitle:"Usage Chart", loadingUsage:"Loading usage data...", preferencesTitle:"Language & Theme", languageLabel:"Language", themeLabel:"Theme", themeSystem:"System", themeLight:"Light", themeDark:"Dark", appImportsTitle:"Add To Apps", appImportsHint:"Tap an app to import this subscription directly.", noAppsSelected:"No app button is enabled.", recommendedTag:"Recommended", appImportsAllTab:"All", appImportsImportButton:"Import", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"Apply", usageApiLink:"Usage API", supportLink:"Support", usageDataUnavailable:"Usage data is unavailable.", noUsageData:"No usage data for selected range.", rangeTotal:"Range total", configFallback:"Config [[index]]", copied:"Copied", qrHint:"Click QR to copy config link", justNow:"just now", minutesAgo:"[[count]] minute(s) ago", hoursAgo:"[[count]] hour(s) ago", daysAgo:"[[count]] day(s) ago" },
-		fa: { usageSummaryTitle:"خلاصه مصرف", usedLabel:"مصرف‌شده", totalLabel:"کل", progressLabel:"پیشرفت", usernameTitle:"نام کاربری", statusTitle:"وضعیت", onlineStatusTitle:"وضعیت آنلاین", onlineNow:"آنلاین", offlineNow:"آفلاین", lastOnlineLabel:"آخرین آنلاین", neverOnline:"هنوز آنلاین نشده است.", expireDetailsTitle:"جزئیات انقضا", daysLeftLabel:"روز باقی‌مانده", expireAtLabel:"تاریخ انقضا", createdAtLabel:"تاریخ ساخت", unlimited:"نامحدود", expiredAlready:"منقضی شده", daysRemaining:"[[days]] روز باقی مانده", subscriptionUrlTitle:"لینک اشتراک", copyUrlButton:"کپی لینک", configLinksTitle:"کانفیگ‌ها", copyButton:"کپی", qrButton:"QR", noLinks:"لینکی موجود نیست.", usageChartTitle:"نمودار مصرف", loadingUsage:"در حال بارگذاری مصرف...", preferencesTitle:"زبان و تم", languageLabel:"زبان", themeLabel:"تم", themeSystem:"سیستم", themeLight:"روشن", themeDark:"تیره", appImportsTitle:"افزودن به برنامه‌ها", appImportsHint:"برای افزودن مستقیم، روی یکی از برنامه‌ها بزنید.", noAppsSelected:"هیچ دکمه برنامه‌ای فعال نیست.", recommendedTag:"پیشنهادی", appImportsAllTab:"همه", appImportsImportButton:"افزودن", osWindows:"ویندوز", osMacos:"مک", osIos:"iOS", osAndroid:"اندروید", osLinux:"لینوکس", applyButton:"اعمال", usageApiLink:"لینک مصرف", supportLink:"پشتیبانی", usageDataUnavailable:"اطلاعات مصرف در دسترس نیست.", noUsageData:"برای این بازه داده‌ای نیست.", rangeTotal:"جمع بازه", configFallback:"کانفیگ [[index]]", copied:"کپی شد", qrHint:"با کلیک روی QR لینک کپی می‌شود", justNow:"همین الان", minutesAgo:"[[count]] دقیقه پیش", hoursAgo:"[[count]] ساعت پیش", daysAgo:"[[count]] روز پیش" },
-		ru: { usageSummaryTitle:"Сводка", usedLabel:"Использовано", totalLabel:"Лимит", progressLabel:"Прогресс", usernameTitle:"Имя пользователя", statusTitle:"Статус", onlineStatusTitle:"Онлайн", onlineNow:"В сети", offlineNow:"Не в сети", lastOnlineLabel:"Последний онлайн", neverOnline:"Нет активности.", expireDetailsTitle:"Срок действия", daysLeftLabel:"Дней осталось", expireAtLabel:"Истекает", createdAtLabel:"Создан", unlimited:"Без лимита", expiredAlready:"Истек", daysRemaining:"Осталось дней: [[days]]", subscriptionUrlTitle:"URL подписки", copyUrlButton:"Копировать URL", configLinksTitle:"Конфиги", copyButton:"Копировать", qrButton:"QR", noLinks:"Ссылки отсутствуют.", usageChartTitle:"График трафика", loadingUsage:"Загрузка статистики...", preferencesTitle:"Язык и тема", languageLabel:"Язык", themeLabel:"Тема", themeSystem:"Система", themeLight:"Светлая", themeDark:"Темная", appImportsTitle:"Импорт в приложения", appImportsHint:"Нажмите приложение для импорта подписки.", noAppsSelected:"Кнопки приложений отключены.", recommendedTag:"Рекомендуется", appImportsAllTab:"Все", appImportsImportButton:"Импорт", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"Применить", usageApiLink:"API статистики", supportLink:"Поддержка", usageDataUnavailable:"Статистика недоступна.", noUsageData:"Нет данных за период.", rangeTotal:"Итого за период", configFallback:"Конфиг [[index]]", copied:"Скопировано", qrHint:"Нажмите на QR для копирования", justNow:"только что", minutesAgo:"[[count]] мин назад", hoursAgo:"[[count]] ч назад", daysAgo:"[[count]] дн назад" },
-		zh: { usageSummaryTitle:"流量概览", usedLabel:"已用", totalLabel:"总量", progressLabel:"进度", usernameTitle:"用户名", statusTitle:"状态", onlineStatusTitle:"在线状态", onlineNow:"在线", offlineNow:"离线", lastOnlineLabel:"最后在线", neverOnline:"暂无在线记录。", expireDetailsTitle:"到期详情", daysLeftLabel:"剩余天数", expireAtLabel:"到期时间", createdAtLabel:"创建时间", unlimited:"无限制", expiredAlready:"已过期", daysRemaining:"剩余 [[days]] 天", subscriptionUrlTitle:"订阅链接", copyUrlButton:"复制链接", configLinksTitle:"配置链接", copyButton:"复制", qrButton:"二维码", noLinks:"暂无链接", usageChartTitle:"流量图表", loadingUsage:"正在加载流量数据...", preferencesTitle:"语言与主题", languageLabel:"语言", themeLabel:"主题", themeSystem:"跟随系统", themeLight:"浅色", themeDark:"深色", appImportsTitle:"添加到应用", appImportsHint:"点击应用可直接导入订阅。", noAppsSelected:"未启用任何应用按钮。", recommendedTag:"推荐", appImportsAllTab:"全部", appImportsImportButton:"导入", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"应用", usageApiLink:"流量 API", supportLink:"支持", usageDataUnavailable:"无法获取流量数据", noUsageData:"所选日期无数据", rangeTotal:"区间总量", configFallback:"配置 [[index]]", copied:"已复制", qrHint:"点击二维码复制链接", justNow:"刚刚", minutesAgo:"[[count]] 分钟前", hoursAgo:"[[count]] 小时前", daysAgo:"[[count]] 天前" }
+		en: { usageSummaryTitle:"Usage Summary", usedLabel:"Used", totalLabel:"Total", progressLabel:"Progress", usernameTitle:"Username", statusTitle:"Status", onlineStatusTitle:"Online Status", onlineNow:"Online", offlineNow:"Offline", lastOnlineLabel:"Last online", neverOnline:"No online activity yet.", expireDetailsTitle:"Expiration Details", daysLeftLabel:"days left", expireAtLabel:"Expires", createdAtLabel:"Created", unlimited:"Unlimited", expiredAlready:"Expired", daysRemaining:"[[days]] days left", subscriptionUrlTitle:"Connect", openInApp:"Open in App", connectHint:"Use the buttons below to connect or copy your subscription link.", copyUrlButton:"Copy Link", configLinksTitle:"Config Links", copyButton:"Copy", qrButton:"QR", noLinks:"No links available.", usageChartTitle:"Usage Chart", loadingUsage:"Loading usage data...", preferencesTitle:"Language & Theme", languageLabel:"Language", themeLabel:"Theme", themeSystem:"System", themeLight:"Light", themeDark:"Dark", appImportsTitle:"Apps", appImportsHint:"Tap an app to import this subscription directly.", noAppsSelected:"No app button is enabled.", recommendedTag:"Recommended", appImportsAllTab:"All", appImportsImportButton:"Import", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"Apply", usageApiLink:"Usage API", supportLink:"Support", usageDataUnavailable:"Usage data is unavailable.", noUsageData:"No usage data for selected range.", rangeTotal:"Range total", configFallback:"Config [[index]]", copied:"Copied", qrHint:"Click QR to copy config link", justNow:"just now", minutesAgo:"[[count]] minute(s) ago", hoursAgo:"[[count]] hour(s) ago", daysAgo:"[[count]] day(s) ago", guideTitle:"How to Connect", guideStep1Title:"Copy your subscription link", guideStep1Desc:"Use the Copy Link button in the Connect section.", guideStep2Title:"Install a compatible app", guideStep2Desc:"See the Apps section to download an app for your device.", guideStep3Title:"Add your subscription", guideStep3Desc:"In the app, add a new subscription and paste your link.", guideStep4Title:"Connect", guideStep4Desc:"Enable the VPN in the app and start browsing securely." },
+		fa: { usageSummaryTitle:"خلاصه مصرف", usedLabel:"مصرف‌شده", totalLabel:"کل", progressLabel:"پیشرفت", usernameTitle:"نام کاربری", statusTitle:"وضعیت", onlineStatusTitle:"وضعیت آنلاین", onlineNow:"آنلاین", offlineNow:"آفلاین", lastOnlineLabel:"آخرین آنلاین", neverOnline:"هنوز آنلاین نشده است.", expireDetailsTitle:"جزئیات انقضا", daysLeftLabel:"روز باقی‌مانده", expireAtLabel:"انقضا", createdAtLabel:"ساخت", unlimited:"نامحدود", expiredAlready:"منقضی شده", daysRemaining:"[[days]] روز باقی مانده", subscriptionUrlTitle:"اتصال", openInApp:"باز کردن در اپ", connectHint:"برای اتصال یا کپی لینک اشتراک، دکمه‌های زیر را بزنید.", copyUrlButton:"کپی لینک", configLinksTitle:"کانفیگ‌ها", copyButton:"کپی", qrButton:"QR", noLinks:"لینکی موجود نیست.", usageChartTitle:"نمودار مصرف", loadingUsage:"در حال بارگذاری مصرف...", preferencesTitle:"زبان و تم", languageLabel:"زبان", themeLabel:"تم", themeSystem:"سیستم", themeLight:"روشن", themeDark:"تیره", appImportsTitle:"اپ‌ها", appImportsHint:"برای افزودن مستقیم، روی یکی از برنامه‌ها بزنید.", noAppsSelected:"هیچ دکمه برنامه‌ای فعال نیست.", recommendedTag:"پیشنهادی", appImportsAllTab:"همه", appImportsImportButton:"افزودن", osWindows:"ویندوز", osMacos:"مک", osIos:"iOS", osAndroid:"اندروید", osLinux:"لینوکس", applyButton:"اعمال", usageApiLink:"لینک مصرف", supportLink:"پشتیبانی", usageDataUnavailable:"اطلاعات مصرف در دسترس نیست.", noUsageData:"برای این بازه داده‌ای نیست.", rangeTotal:"جمع بازه", configFallback:"کانفیگ [[index]]", copied:"کپی شد", qrHint:"با کلیک روی QR لینک کپی می‌شود", justNow:"همین الان", minutesAgo:"[[count]] دقیقه پیش", hoursAgo:"[[count]] ساعت پیش", daysAgo:"[[count]] روز پیش", guideTitle:"نحوه اتصال", guideStep1Title:"لینک اشتراک را کپی کنید", guideStep1Desc:"دکمه کپی لینک را در بخش اتصال بزنید.", guideStep2Title:"اپ مناسب را نصب کنید", guideStep2Desc:"از بخش اپ‌ها یک اپ برای دستگاهتان دانلود کنید.", guideStep3Title:"اشتراک را اضافه کنید", guideStep3Desc:"در اپ، اشتراک جدید اضافه کرده و لینک را وارد کنید.", guideStep4Title:"متصل شوید", guideStep4Desc:"VPN را در اپ فعال کنید و مرور کنید." },
+		ru: { usageSummaryTitle:"Сводка", usedLabel:"Использовано", totalLabel:"Лимит", progressLabel:"Прогресс", usernameTitle:"Пользователь", statusTitle:"Статус", onlineStatusTitle:"Онлайн", onlineNow:"В сети", offlineNow:"Не в сети", lastOnlineLabel:"Последний онлайн", neverOnline:"Нет активности.", expireDetailsTitle:"Срок действия", daysLeftLabel:"дней осталось", expireAtLabel:"Истекает", createdAtLabel:"Создан", unlimited:"Без лимита", expiredAlready:"Истек", daysRemaining:"Осталось: [[days]] дн.", subscriptionUrlTitle:"Подключение", openInApp:"Открыть в приложении", connectHint:"Нажмите кнопку для подключения или скопируйте ссылку подписки.", copyUrlButton:"Скопировать ссылку", configLinksTitle:"Конфиги", copyButton:"Копировать", qrButton:"QR", noLinks:"Ссылки отсутствуют.", usageChartTitle:"График трафика", loadingUsage:"Загрузка статистики...", preferencesTitle:"Язык и тема", languageLabel:"Язык", themeLabel:"Тема", themeSystem:"Система", themeLight:"Светлая", themeDark:"Темная", appImportsTitle:"Приложения", appImportsHint:"Нажмите приложение для импорта подписки.", noAppsSelected:"Кнопки приложений отключены.", recommendedTag:"Рекомендуется", appImportsAllTab:"Все", appImportsImportButton:"Импорт", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"Применить", usageApiLink:"API статистики", supportLink:"Поддержка", usageDataUnavailable:"Статистика недоступна.", noUsageData:"Нет данных за период.", rangeTotal:"Итого за период", configFallback:"Конфиг [[index]]", copied:"Скопировано", qrHint:"Нажмите на QR для копирования", justNow:"только что", minutesAgo:"[[count]] мин назад", hoursAgo:"[[count]] ч назад", daysAgo:"[[count]] дн назад", guideTitle:"Как подключиться", guideStep1Title:"Скопируйте ссылку подписки", guideStep1Desc:"Нажмите «Скопировать ссылку» в разделе Подключение.", guideStep2Title:"Установите совместимое приложение", guideStep2Desc:"В разделе Приложения скачайте подходящее приложение.", guideStep3Title:"Добавьте подписку", guideStep3Desc:"В приложении добавьте подписку и вставьте скопированную ссылку.", guideStep4Title:"Подключитесь", guideStep4Desc:"Включите VPN в приложении и начните безопасный просмотр." },
+		zh: { usageSummaryTitle:"流量概览", usedLabel:"已用", totalLabel:"总量", progressLabel:"进度", usernameTitle:"用户名", statusTitle:"状态", onlineStatusTitle:"在线状态", onlineNow:"在线", offlineNow:"离线", lastOnlineLabel:"最后在线", neverOnline:"暂无在线记录。", expireDetailsTitle:"到期详情", daysLeftLabel:"天剩余", expireAtLabel:"到期", createdAtLabel:"创建", unlimited:"无限制", expiredAlready:"已过期", daysRemaining:"剩余 [[days]] 天", subscriptionUrlTitle:"连接", openInApp:"在应用中打开", connectHint:"点击下方按钮连接或复制订阅链接。", copyUrlButton:"复制链接", configLinksTitle:"配置链接", copyButton:"复制", qrButton:"二维码", noLinks:"暂无链接", usageChartTitle:"流量图表", loadingUsage:"正在加载流量数据...", preferencesTitle:"语言与主题", languageLabel:"语言", themeLabel:"主题", themeSystem:"跟随系统", themeLight:"浅色", themeDark:"深色", appImportsTitle:"应用", appImportsHint:"点击应用可直接导入订阅。", noAppsSelected:"未启用任何应用按钮。", recommendedTag:"推荐", appImportsAllTab:"全部", appImportsImportButton:"导入", osWindows:"Windows", osMacos:"macOS", osIos:"iOS", osAndroid:"Android", osLinux:"Linux", applyButton:"应用", usageApiLink:"流量 API", supportLink:"支持", usageDataUnavailable:"无法获取流量数据", noUsageData:"所选日期无数据", rangeTotal:"区间总量", configFallback:"配置 [[index]]", copied:"已复制", qrHint:"点击二维码复制链接", justNow:"刚刚", minutesAgo:"[[count]] 分钟前", hoursAgo:"[[count]] 小时前", daysAgo:"[[count]] 天前", guideTitle:"如何连接", guideStep1Title:"复制订阅链接", guideStep1Desc:"点击连接区域的"复制链接"按钮。", guideStep2Title:"安装兼容应用", guideStep2Desc:"在应用区域下载适合您设备的应用。", guideStep3Title:"添加订阅", guideStep3Desc:"在应用中添加订阅并粘贴您复制的链接。", guideStep4Title:"连接", guideStep4Desc:"在应用中启用 VPN，开始安全浏览。" }
 	};
 	var twemojiOptions = { base:"https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/", folder:"72x72", ext:".png", className:"twemoji-emoji", size:"72x72" };
 
